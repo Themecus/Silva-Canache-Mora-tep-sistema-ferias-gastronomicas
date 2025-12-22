@@ -1,4 +1,6 @@
+// src/puestos/dto/create-puesto.dto.ts
 export class CreatePuestoDto {
-  color: string;
   nombre: string;
+  color: string;
+  emprendedorId: string;  // 👈 NUEVO: ID del emprendedor que crea
 }

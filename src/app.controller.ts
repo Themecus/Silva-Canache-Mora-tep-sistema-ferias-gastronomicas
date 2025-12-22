@@ -1,3 +1,4 @@
+// src/app.controller.ts
 import { Controller, Get } from '@nestjs/common';
 
 @Controller()
@@ -5,28 +6,54 @@ export class AppController {
   @Get()
   getInfo() {
     return {
-      servicio: 'Microservicio de feria gastronomia',
-      version: '1.0.0',
+      servicio: 'Microservicio de Puestos Gastronómicos',
+      version: '2.0.0',
       estado: 'activo',
-      endpoints: {
-        crear_puesto: 'POST /puestos',
-        listar_puestos: 'GET /puestos',
-        obtener_puesto: 'GET /puestos/:id',
-        actualizar_puesto: 'PATCH /puestos/:id',
-        eliminar_puesto: 'DELETE /puestos/:id',
-        //aqui se debe agregar otros endpoints
+      descripcion: 'Gestión completa de puestos con estados y validaciones',
+      endpoints_publicos: {
+        raiz: 'GET /',
+        puestos_activos: 'GET /puestos/activos',
+        verificar_puesto: 'GET /puestos/:id/verificar-activo'
       },
-      ejemplo_uso: {
-        //ejemplo de uso en postman y esta parte solo lo vera el usuario de postman, podemos mejorar su aspecto
-        crear: {
+      endpoints_autenticados: {
+        // 🔴 FUTURO: Estos endpoints requerirán JWT validado por API Gateway
+        crear_puesto: 'POST /puestos (Header: x-user-id, x-user-rol=emprendedor)',
+        mis_puestos: 'GET /puestos/emprendedor/:id',
+        editar_puesto: 'PATCH /puestos/:id (solo dueño)',
+        eliminar_puesto: 'DELETE /puestos/:id (solo dueño, solo pendientes)',
+        cambiar_estado: 'PATCH /puestos/:id/estado (aprobado: organizadores, activo: organizadores, inactivo: dueño/organizadores)'
+      },
+      flujo_estados: {
+        pendiente: '→ (organizador) → aprobado → (organizador) → activo',
+        'cualquier estado': '→ (dueño/organizador) → inactivo'
+      },
+      ejemplo_simulacion_postman: {
+        crear_puesto: {
           metodo: 'POST',
           url: '/puestos',
-          body: {
-            nombre: 'Arepas Rodrigez',
-            color: 'rojo',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': 'emp-123',          // 👈 SIMULADO
+            'x-user-rol': 'emprendedor'      // 👈 SIMULADO
           },
+          body: {
+            nombre: 'Tacos El Güero',
+            color: 'rojo'
+          }
         },
-      },
+        aprobar_puesto: {
+          metodo: 'PATCH',
+          url: '/puestos/{id}/estado',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': 'org-456',          // 👈 SIMULADO
+            'x-user-rol': 'organizador'      // 👈 SIMULADO
+          },
+          body: {
+            estado: 'aprobado'
+          }
+        }
+      }
     };
   }
 }

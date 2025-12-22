@@ -1,4 +1,5 @@
+// src/puestos/dto/update-puesto.dto.ts
 export class UpdatePuestoDto {
-  color?: string;
   nombre?: string;
+  color?: string;
 }
