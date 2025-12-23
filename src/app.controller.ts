@@ -16,7 +16,7 @@ export class AppController {
         verificar_puesto: 'GET /puestos/:id/verificar-activo'
       },
       endpoints_autenticados: {
-        // 🔴 ojo: Estos endpoints requerirán JWT validado por API Gateway
+        //  ojo: Estos endpoints requerirán JWT validado por API Gateway
         crear_puesto: 'POST /puestos (Header: x-user-id, x-user-rol=emprendedor)',
         mis_puestos: 'GET /puestos/emprendedor/:id',
         editar_puesto: 'PATCH /puestos/:id (solo dueño)',
@@ -33,8 +33,8 @@ export class AppController {
           url: '/puestos',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': 'emp-123',          // 👈 SIMULADO
-            'x-user-rol': 'emprendedor'      // 👈 SIMULADO
+            'x-user-id': 'emp-123',         
+            'x-user-rol': 'emprendedor'      
           },
           body: {
             nombre: 'Tacos El Güero',
@@ -46,8 +46,8 @@ export class AppController {
           url: '/puestos/{id}/estado',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': 'org-456',          // 👈 SIMULADO
-            'x-user-rol': 'organizador'      // 👈 SIMULADO
+            'x-user-id': 'org-456',          
+            'x-user-rol': 'organizador'     
           },
           body: {
             estado: 'aprobado'
