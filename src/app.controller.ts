@@ -1,6 +1,6 @@
-// src/app.controller.ts
 import { Controller, Get } from '@nestjs/common';
-
+//controlador principal de la aplicacion en este puerto
+//gran parte de la info aqui es para saber que hace cada endpoint, aunque algunos seran quitados cuando unamos microservicios
 @Controller()
 export class AppController {
   @Get()
@@ -16,7 +16,7 @@ export class AppController {
         verificar_puesto: 'GET /puestos/:id/verificar-activo'
       },
       endpoints_autenticados: {
-        // 🔴 FUTURO: Estos endpoints requerirán JWT validado por API Gateway
+        // 🔴 ojo: Estos endpoints requerirán JWT validado por API Gateway
         crear_puesto: 'POST /puestos (Header: x-user-id, x-user-rol=emprendedor)',
         mis_puestos: 'GET /puestos/emprendedor/:id',
         editar_puesto: 'PATCH /puestos/:id (solo dueño)',

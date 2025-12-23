@@ -1,19 +1,20 @@
-// src/puestos/puestos.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreatePuestoDto } from './dto/create-puesto.dto';
 import { UpdatePuestoDto } from './dto/update-puesto.dto';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
 import { Puesto } from './entities/puesto.entity';
 
+
+//este archivo contendra toda la logica de negocio, validdaciones, CRUD para los puestos
+
 @Injectable()
 export class PuestosService {
-  private puestos: Puesto[] = [];
+  private puestos: Puesto[] = [];//almacen de puestos
 
-  // ============ CRUD BÁSICO ============
+  // en esta parte estara el CRUD 
   
   create(createPuestoDto: CreatePuestoDto): Puesto {
-    // 🔴 FUTURO: Verificar con microservicio 1 que emprendedorId existe
-    // 🔴 FUTURO: Verificar que el usuario tenga rol 'emprendedor'
+    //  ojo: Verificar con microservicio 1 que emprendedorId existe y  Verificar que el usuario tenga rol 'emprendedor'
     
     const puesto = new Puesto(
       createPuestoDto.nombre,
@@ -24,11 +25,12 @@ export class PuestosService {
     this.puestos.push(puesto);
     return puesto;
   }
-
+  //este se encarga de obtener todos los puestos que existan
   findAll(): Puesto[] {
     return this.puestos;
   }
 
+  //busca un puesto en base a la ID
   findOne(id: string): Puesto {
     const puesto = this.puestos.find(puesto => puesto.id === id);
     if (!puesto) {
@@ -37,13 +39,13 @@ export class PuestosService {
     return puesto;
   }
 
-  // ============ FUNCIONALIDADES ESPECÍFICAS ============
+  //  funcionalidades varias a partir de aqui
   
-  // 1. Editar puesto (solo dueño)
+  // aqui podemos un editar puesto pero solo podra el  dueño
   update(id: string, updatePuestoDto: UpdatePuestoDto, usuarioId: string): Puesto {
     const puesto = this.findOne(id);
     
-    // 🔴 FUTURO: Verificar con microservicio 1 el token/rol
+    //ojo: Verificar con microservicio 1 el token/rol
     if (!puesto.puedeEditar(usuarioId)) {
       throw new BadRequestException('Solo el dueño puede editar este puesto');
     }
@@ -65,11 +67,11 @@ export class PuestosService {
     return puesto;
   }
 
-  // 2. Cambiar estado (aprobación/activación/inactivación)
+  // Aqui cambiaremos el estado (aprobacion/activacion/inactivacion)
   cambiarEstado(id: string, cambiarEstadoDto: CambiarEstadoDto, usuarioId: string, usuarioRol: string): Puesto {
     const puesto = this.findOne(id);
     
-    // 🔴 FUTURO: Verificar con microservicio 1 el token/rol
+    // ojo: Verificar con microservicio 1 el token/rol
     
     switch (cambiarEstadoDto.estado) {
       case 'aprobado':
@@ -110,6 +112,7 @@ export class PuestosService {
     return puesto;
   }
 
+  //esto solo borra puestos
   remove(id: string, usuarioId: string): void {
     const puesto = this.findOne(id);
     
@@ -127,28 +130,28 @@ export class PuestosService {
     this.puestos.splice(index, 1);
   }
 
-  // ============ CONSULTAS ESPECIALES ============
+  //  Consultas concretas 
   
-  // Puestos de un emprendedor específico
+  // Busca por emprendedor
   findByEmprendedor(emprendedorId: string): Puesto[] {
     return this.puestos.filter(puesto => puesto.emprendedorId === emprendedorId);
   }
 
-  // Puestos por estado (para organizadores)
+  // Busca por estado
   findByEstado(estado: string): Puesto[] {
     return this.puestos.filter(puesto => puesto.estado === estado);
   }
 
-  // Puestos activos (para catálogo público)
+  // Busca por actividad
   findActivos(): Puesto[] {
     return this.puestos.filter(puesto => 
       puesto.estado === 'activo' && puesto.disponible === true
     );
   }
 
-  // ============ PARA COMUNICACIÓN CON OTROS MICROSERVICIOS ============
+  //  comunicacion con otros servicios
   
-  // Para microservicio de productos: verificar si puesto está activo
+  // verifica si un puesto esta activo
   verificarPuestoActivo(puestoId: string): { activo: boolean; puesto?: Puesto } {
     try {
       const puesto = this.findOne(puestoId);
@@ -161,7 +164,7 @@ export class PuestosService {
     }
   }
 
-  // Para microservicio de productos: verificar propiedad
+  // verifica si un emprendor es dueno de ese puesto
   verificarPropiedad(puestoId: string, emprendedorId: string): boolean {
     try {
       const puesto = this.findOne(puestoId);
@@ -171,7 +174,7 @@ export class PuestosService {
     }
   }
 
-  // 🔴 FUTURO: Endpoint para API Gateway/comunicación entre microservicios
+  //  ojo: Endpoint para API Gateway/comunicación entre microservicios
   // Este endpoint sería llamado por el API Gateway u otros microservicios
   validarPuestoParaPedido(puestoId: string): { valido: boolean; motivo?: string } {
     try {

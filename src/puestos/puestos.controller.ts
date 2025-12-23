@@ -1,5 +1,4 @@
-// src/puestos/puestos.controller.ts
-import { 
+import { //los diferentes comandos para el postman
   Controller, 
   Get, 
   Post, 
@@ -17,27 +16,27 @@ import { CreatePuestoDto } from './dto/create-puesto.dto';
 import { UpdatePuestoDto } from './dto/update-puesto.dto';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
 
+//se encarga de manejar las rutas HTTP
 @Controller('puestos')
 export class PuestosController {
   constructor(private readonly puestosService: PuestosService) {}
 
-  // ============ CRUD CON VALIDACIÓN SIMULADA ============
-  
+  // el CRUD 
+  // crear un nuevo puesto
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.CREATED)//deberia devolver el codigo 201 en caso de ser creado
   create(
     @Body() createPuestoDto: CreatePuestoDto,
-    @Headers('x-user-id') userId: string,  // 👈 SIMULACIÓN: usuario del token
-    @Headers('x-user-rol') userRol: string  // 👈 SIMULACIÓN: rol del usuario
+    @Headers('x-user-id') userId: string,  // tanto este 
+    @Headers('x-user-rol') userRol: string  // como este son temporales, nesecitamos implementar el microservicio 1
   ) {
-    // 🔴 FUTURO: Este header vendría del API Gateway después de validar JWT
-    // 🔴 FUTURO: Verificar con microservicio 1 que el usuario existe y es emprendedor
+    // Nota: Este header vendría del API Gateway después de validar JWT y Verificar con microservicio 1 que el usuario existe y es emprendedor
     
-    if (!userId) {
+    if (!userId) {//verficadores
       return { error: 'Se requiere autenticación' };
     }
     
-    if (userRol !== 'emprendedor') {
+    if (userRol !== 'emprendedor') {//verficadores
       return { error: 'Solo emprendedores pueden crear puestos' };
     }
     
@@ -47,6 +46,7 @@ export class PuestosController {
     return this.puestosService.create(createPuestoDto);
   }
 
+  //nos da todos lo puestos
   @Get()
   findAll(@Query('estado') estado?: string) {
     if (estado) {
@@ -54,17 +54,17 @@ export class PuestosController {
     }
     return this.puestosService.findAll();
   }
-
+  //nos da los puestos activos
   @Get('activos')
   findActivos() {
     return this.puestosService.findActivos();
   }
-
+  //nos da los puestos por ID
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.puestosService.findOne(id);
   }
-
+  //actualiza los puestos pero solo puede el dueno
   @Patch(':id')
   update(
     @Param('id') id: string, 
@@ -72,14 +72,14 @@ export class PuestosController {
     @Headers('x-user-id') userId: string,
     @Headers('x-user-rol') userRol: string
   ) {
-    // 🔴 FUTURO: Validación real con microservicio 1
+    //Nota: Validación real con microservicio 1
     if (!userId) {
       return { error: 'Se requiere autenticación' };
     }
     
     return this.puestosService.update(id, updatePuestoDto, userId);
   }
-
+  //borra el puesto si eres el dueno y lo tienes en pendiente
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
@@ -87,7 +87,7 @@ export class PuestosController {
     @Headers('x-user-id') userId: string,
     @Headers('x-user-rol') userRol: string
   ) {
-    // 🔴 FUTURO: Validación real con microservicio 1
+    //Nota: Validación real con microservicio 1
     if (!userId) {
       return { error: 'Se requiere autenticación' };
     }
@@ -95,13 +95,13 @@ export class PuestosController {
     return this.puestosService.remove(id, userId);
   }
 
-  // ============ ENDPOINTS ESPECÍFICOS ============
-  
+  //  ENDPOINTS ESPECÍFICOS 
+  //verifica si esta activo para otros microservicios
   @Get('emprendedor/:emprendedorId')
   findByEmprendedor(@Param('emprendedorId') emprendedorId: string) {
     return this.puestosService.findByEmprendedor(emprendedorId);
   }
-
+  //cambia el estado del puesto
   @Patch(':id/estado')
   cambiarEstado(
     @Param('id') id: string, 
@@ -109,7 +109,7 @@ export class PuestosController {
     @Headers('x-user-id') userId: string,
     @Headers('x-user-rol') userRol: string
   ) {
-    // 🔴 FUTURO: Validación real con microservicio 1
+    //Nota: Validación real con microservicio 1
     if (!userId) {
       return { error: 'Se requiere autenticación' };
     }
@@ -121,14 +121,15 @@ export class PuestosController {
     return this.puestosService.cambiarEstado(id, cambiarEstadoDto, userId, userRol);
   }
 
-  // ============ ENDPOINTS PARA OTROS MICROSERVICIOS ============
-  // 🔴 Estos serían llamados por el API Gateway u otros microservicios
-  
+  //  ENDPOINTS PARA OTROS MICROSERVICIOS 
+  // Nota: Estos serían llamados por el API Gateway u otros microservicios
+ 
+  //verifica si un puesto está activo (para otros microservicios)
   @Get(':id/verificar-activo')
   verificarPuestoActivo(@Param('id') id: string) {
     return this.puestosService.verificarPuestoActivo(id);
   }
-
+  //verifica si un emprendedor es dueño de un puesto (para otros microservicios)
   @Get(':id/verificar-propiedad/:emprendedorId')
   verificarPropiedad(
     @Param('id') id: string,
@@ -137,7 +138,7 @@ export class PuestosController {
     const esPropietario = this.puestosService.verificarPropiedad(id, emprendedorId);
     return { esPropietario };
   }
-
+  //verificar para un pedido
   @Get(':id/validar-para-pedido')
   validarPuestoParaPedido(@Param('id') id: string) {
     return this.puestosService.validarPuestoParaPedido(id);

@@ -1,14 +1,20 @@
-// src/main.ts
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
+//esto sera nuestro punto de entrada para aplicacion
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);//crea la aplicacio n nest usando el modulo raiz
+  //habilita las peticiones desde otro dominio
   app.enableCors();
   
-  const port = 3001;  // Cambiado a 3001 para evitar conflicto
+  
+  const port = 3001;  // el puerto a usar
+  //arranca el server
   await app.listen(port);
   
+  //toda esta parte de abajo solo es para uso de desarrolladores
   console.log('========================================');
   console.log('🚀 MICROSERVICIO DE PUESTOS - COMPLETO');
   console.log(`📍 URL: http://localhost:${port}`);
