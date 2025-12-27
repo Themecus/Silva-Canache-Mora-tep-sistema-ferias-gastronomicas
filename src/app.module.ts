@@ -1,12 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsuarioModule } from './usuario/usuario.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
+import { AppController } from './app.controller';
 
 @Module({
-  imports: [UsuarioModule, UsuariosModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [UsuariosModule], // Solo usuarios, todo incluido
+  controllers: [AppController]
 })
 export class AppModule {}
