@@ -1,10 +1,4 @@
 import { Controller, Get } from '@nestjs/common';
-
-@Controller()
-export class AppController {
-  @Get()
-  getInfo() {
-    return {
       servicio: 'Microservicio de Usuarios y Autenticacion',
       version: '1.0.0',
       estado: 'activo',

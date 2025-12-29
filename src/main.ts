@@ -1,5 +1,8 @@
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+
+//esto sera nuestro punto de entrada para aplicacion
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
