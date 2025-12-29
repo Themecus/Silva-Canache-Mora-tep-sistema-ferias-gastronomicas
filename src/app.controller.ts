@@ -1,57 +1,46 @@
 import { Controller, Get } from '@nestjs/common';
-//controlador principal de la aplicacion en este puerto
-//gran parte de la info aqui es para saber que hace cada endpoint, aunque algunos seran quitados cuando unamos microservicios
-@Controller()
-export class AppController {
-  @Get()
-  getInfo() {
-    return {
-      servicio: 'Microservicio de Puestos Gastronómicos',
-      version: '2.0.0',
+      servicio: 'Microservicio de Usuarios y Autenticacion',
+      version: '1.0.0',
       estado: 'activo',
-      descripcion: 'Gestión completa de puestos con estados y validaciones',
-      endpoints_publicos: {
-        raiz: 'GET /',
-        puestos_activos: 'GET /puestos/activos',
-        verificar_puesto: 'GET /puestos/:id/verificar-activo'
+      descripcion: 'Gestion de usuarios con autenticacion integrada',
+      
+      endpoints: {
+        // Autenticacion
+        registro: 'POST /usuarios/registro',
+        login: 'POST /usuarios/login',
+        perfil: 'GET /usuarios/perfil (requiere token)',
+        logout: 'POST /usuarios/logout',
+        validar_token: 'GET /usuarios/validar-token',
+        validar_token_rol: 'GET /usuarios/validar/{rol}',
+        
+        // Gestion de usuarios
+        crear_usuario: 'POST /usuarios',
+        listar_usuarios: 'GET /usuarios',
+        listar_por_rol: 'GET /usuarios?rol=cliente|emprendedor|organizador',
+        obtener_usuario: 'GET /usuarios/:id',
+        buscar_por_email: 'GET /usuarios/email/:email',
+        actualizar_usuario: 'PATCH /usuarios/:id',
+        desactivar_usuario: 'DELETE /usuarios/:id',
+        estadisticas: 'GET /usuarios/estadisticas',
+        
+        // Para otros microservicios
+        verificar_usuario_rol: 'GET /usuarios/verificar/{usuarioId}/{rol}'
       },
-      endpoints_autenticados: {
-        //  ojo: Estos endpoints requerirán JWT validado por API Gateway
-        crear_puesto: 'POST /puestos (Header: x-user-id, x-user-rol=emprendedor)',
-        mis_puestos: 'GET /puestos/emprendedor/:id',
-        editar_puesto: 'PATCH /puestos/:id (solo dueño)',
-        eliminar_puesto: 'DELETE /puestos/:id (solo dueño, solo pendientes)',
-        cambiar_estado: 'PATCH /puestos/:id/estado (aprobado: organizadores, activo: organizadores, inactivo: dueño/organizadores)'
-      },
-      flujo_estados: {
-        pendiente: '→ (organizador) → aprobado → (organizador) → activo',
-        'cualquier estado': '→ (dueño/organizador) → inactivo'
-      },
-      ejemplo_simulacion_postman: {
-        crear_puesto: {
-          metodo: 'POST',
-          url: '/puestos',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': 'emp-123',         
-            'x-user-rol': 'emprendedor'      
-          },
-          body: {
-            nombre: 'Tacos El Güero',
-            color: 'rojo'
-          }
+      
+      roles_disponibles: ['cliente', 'emprendedor', 'organizador'],
+      
+      usuarios_por_defecto: {//esto es informacion base y prueba
+        organizador: {
+          email: 'admin@feria.com',
+          password: 'admin123'
         },
-        aprobar_puesto: {
-          metodo: 'PATCH',
-          url: '/puestos/{id}/estado',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': 'org-456',          
-            'x-user-rol': 'organizador'     
-          },
-          body: {
-            estado: 'aprobado'
-          }
+        cliente: {
+          email: 'cliente@ejemplo.com',
+          password: 'cliente123'
+        },
+        emprendedor: {
+          email: 'emprendedor@ejemplo.com',
+          password: 'emprendedor123'
         }
       }
     };
