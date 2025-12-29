@@ -1,11 +1,13 @@
+// src/puestos/puestos.module.ts
 import { Module } from '@nestjs/common';
 import { PuestosService } from './puestos.service';
 import { PuestosController } from './puestos.controller';
-//aqui solo se encargara de exportar los compoenentes de puestos
+import { CustomHttpModule } from '../common/http/http.module'; // AÑADE ESTA LÍNEA
 
 @Module({
-  controllers: [PuestosController],//manejha las rutas
-  providers: [PuestosService],//logica de neogico
-  exports: [PuestosService],  // Exportacion
+  imports: [CustomHttpModule], // AÑADE ESTA LÍNEA
+  controllers: [PuestosController],
+  providers: [PuestosService],
+  exports: [PuestosService],
 })
 export class PuestosModule {}

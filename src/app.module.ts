@@ -1,9 +1,18 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { PuestosModule } from './puestos/puestos.module';
 import { AppController } from './app.controller';
-// Este archivo se encarga de importa todos los demás módulos y declara controladores globales.
+import { AppService } from './app.service';
+import { PuestosModule } from './puestos/puestos.module';
+import { UsuariosModule } from './usuarios/usuarios.module'; // AÑADE ESTA LINEA
+import { CustomHttpModule } from './common/http/http.module';
+
 @Module({
-  imports: [PuestosModule],//importa
-  controllers: [AppController],//controladores globales
+  imports: [
+    CustomHttpModule,
+    PuestosModule,
+    UsuariosModule, // AÑADE ESTA LINEA
+  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

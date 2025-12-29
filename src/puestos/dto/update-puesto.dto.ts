@@ -1,6 +1,5 @@
+// src/puestos/dto/update-puesto.dto.ts
 export class UpdatePuestoDto {
   nombre?: string;
-  color?: string;// actualizar la info de los puestos
+  color?: string;
 }
-
-//este archivo solo ayuda actualizar la informacion del puesto, por eso el ? al final de cada variable
