@@ -1,4 +1,3 @@
-// src/puestos/puestos.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreatePuestoDto } from './dto/create-puesto.dto';
 import { UpdatePuestoDto } from './dto/update-puesto.dto';
@@ -14,8 +13,8 @@ export class PuestosService {
     console.log('PuestosService inicializado con HTTP Service');
   }
 
-  // ============ MÉTODO PARA VALIDACIÓN ============
-  
+
+  //valida tokens y extrae infromacion de usuario
   private async validarYExtraerUsuario(token: string): Promise<{ id: string; rol: string; email: string }> {
     console.log('Validando token para operación...');
     
@@ -39,8 +38,7 @@ export class PuestosService {
     };
   }
 
-  // ============ CRUD ACTUALIZADO ============
-  
+  //crea puestos
   async create(createPuestoDto: CreatePuestoDto, token: string): Promise<Puesto> {
     console.log('Creando puesto con token real...');
     
@@ -69,10 +67,11 @@ export class PuestosService {
     return puesto;
   }
 
+  //busca todos los puestos
   findAll(): Puesto[] {
     return this.puestos;
   }
-
+  //busca por ID
   findOne(id: string): Puesto {
     const puesto = this.puestos.find(puesto => puesto.id === id);
     if (!puesto) {
@@ -80,23 +79,22 @@ export class PuestosService {
     }
     return puesto;
   }
-
+  //Busca por emprendedor
   findByEmprendedor(emprendedorId: string): Puesto[] {
     return this.puestos.filter(puesto => puesto.emprendedorId === emprendedorId);
   }
-
+  //busca por estado
   findByEstado(estado: string): Puesto[] {
     return this.puestos.filter(puesto => puesto.estado === estado);
   }
-
+  //Busca los activos
   findActivos(): Puesto[] {
     return this.puestos.filter(puesto => 
       puesto.estado === 'activo' && puesto.disponible === true
     );
   }
 
-  // ============ MÉTODOS QUE SIGUEN USANDO HEADERS SIMULADOS (POR AHORO) ============
-  
+  //actualiza puestos que existan
   update(id: string, updatePuestoDto: UpdatePuestoDto, usuarioId: string): Puesto {
     const puesto = this.findOne(id);
     
@@ -119,7 +117,7 @@ export class PuestosService {
     puesto.actualizadoEn = new Date();
     return puesto;
   }
-
+  //borra un puesto
   remove(id: string, usuarioId: string): void {
     const puesto = this.findOne(id);
     
@@ -134,7 +132,7 @@ export class PuestosService {
     const index = this.puestos.findIndex(puesto => puesto.id === id);
     this.puestos.splice(index, 1);
   }
-
+  //cambia el estado del puesto
   cambiarEstado(id: string, cambiarEstadoDto: CambiarEstadoDto, usuarioId: string, usuarioRol: string): Puesto {
     const puesto = this.findOne(id);
     
@@ -173,8 +171,7 @@ export class PuestosService {
     return puesto;
   }
 
-  // ============ MÉTODOS PARA OTROS SERVICIOS ============
-  
+  //verifica si el estado de un puesto es activo  
   verificarPuestoActivo(puestoId: string): { activo: boolean; puesto?: Puesto } {
     try {
       const puesto = this.findOne(puestoId);
@@ -186,7 +183,7 @@ export class PuestosService {
       return { activo: false };
     }
   }
-
+  //verifica si un emprendedor es dueno de un puesto
   verificarPropiedad(puestoId: string, emprendedorId: string): boolean {
     try {
       const puesto = this.findOne(puestoId);
@@ -195,7 +192,7 @@ export class PuestosService {
       return false;
     }
   }
-
+  //verifica si un puesto puede recibir pedidos
   validarPuestoParaPedido(puestoId: string): { valido: boolean; motivo?: string } {
     try {
       const puesto = this.findOne(puestoId);
@@ -214,3 +211,5 @@ export class PuestosService {
     }
   }
 }
+
+//aqui en este .ts se gestiona todo lo que seria: CRUD, validacion de permisos, cambios de estado, comunicacion

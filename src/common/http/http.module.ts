@@ -5,11 +5,14 @@ import { CustomHttpService } from './http.service';
 @Module({
   imports: [
     HttpModule.register({
-      timeout: 10000,
-      maxRedirects: 5,
+      timeout: 10000,//tiempo de espera de 10s
+      maxRedirects: 5,//cuantas redirecciones son posibles
     }),
   ],
-  providers: [CustomHttpService],
-  exports: [CustomHttpService], // ¡IMPORTANTE! Esto debe estar
+  providers: [CustomHttpService],//los servicios que estaran disponibles
+  exports: [CustomHttpService], // esto permite su uso en otros modulos
 })
 export class CustomHttpModule {}
+
+//Este .ts actuara para hacer peticiones a otros microservcios cuando sea necesario
+//valida tokens, crea comunicacion y verifica roles

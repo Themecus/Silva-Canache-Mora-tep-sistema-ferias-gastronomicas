@@ -1,18 +1,10 @@
-// src/usuarios/entities/usuario.entity.ts
-
-/**
- * Roles disponibles en el sistema
- */
 export enum RolUsuario {
   CLIENTE = 'cliente',
   EMPRENDEDOR = 'emprendedor',
   ORGANIZADOR = 'organizador'
 }
 
-/**
- * Entidad que representa un usuario en el sistema
- * Contiene todos los datos de un usuario
- */
+
 export class Usuario {
   id: string;           // Identificador único
   email: string;        // Correo electrónico (único)
@@ -25,9 +17,7 @@ export class Usuario {
   creadoEn: Date;       // Fecha de creación
   actualizadoEn: Date;  // Fecha de última actualización
 
-  /**
-   * Constructor para crear un nuevo usuario
-   */
+
   constructor(
     email: string,
     password: string,
@@ -48,46 +38,31 @@ export class Usuario {
     this.actualizadoEn = new Date();
   }
 
-  /**
-   * Genera un ID único para el usuario
-   */
+  //da un ID unico al usuario
   private generarId(): string {
     return 'usr-' + Math.random().toString(36).substring(2, 9);
   }
 
-  /**
-   * Verifica si el usuario puede crear puestos
-   * Solo emprendedores pueden crear puestos
-   */
+  //verifica si el usuario tiene permisos para crear el puesto
   puedeCrearPuesto(): boolean {
     return this.rol === RolUsuario.EMPRENDEDOR;
   }
-
-  /**
-   * Verifica si el usuario puede aprobar puestos
-   * Solo organizadores pueden aprobar puestos
-   */
+  //verifica si el usuario tiene permisos de aprobacion de puestos
   puedeAprobarPuestos(): boolean {
     return this.rol === RolUsuario.ORGANIZADOR;
   }
 
-  /**
-   * Verifica si el usuario es cliente
-   */
+  //revisa si es cliente
   esCliente(): boolean {
     return this.rol === RolUsuario.CLIENTE;
   }
 
-  /**
-   * Devuelve el nombre completo del usuario
-   */
+  //nombre del usuario
   getNombreCompleto(): string {
     return `${this.nombre} ${this.apellido}`;
   }
 
-  /**
-   * Devuelve información segura del usuario (sin password)
-   */
+  //da datos de usuario pero sin contrasena
   getInfoSegura() {
     return {
       id: this.id,
@@ -103,3 +78,5 @@ export class Usuario {
     };
   }
 }
+
+//este .ts se encarga de definir los dato sy comportamientos del usuario

@@ -1,4 +1,3 @@
-// src/app.controller.ts
 import { Controller, Get } from '@nestjs/common';
 
 @Controller()
@@ -49,19 +48,19 @@ export class AppController {
         
         // ==================== GESTIÓN DE PUESTOS ====================
         puestos: {
-          // CRUD Básico
+          // CRUD 
           crear_puesto: 'POST /api/puestos (requiere token de emprendedor)',
           listar_puestos: 'GET /api/puestos',
           obtener_puesto: 'GET /api/puestos/:id',
           actualizar_puesto: 'PATCH /api/puestos/:id (requiere ser dueño)',
           eliminar_puesto: 'DELETE /api/puestos/:id (requiere ser dueño, solo pendientes)',
           
-          // Filtros y búsquedas
+          // Filtros de busqueda
           puestos_activos: 'GET /api/puestos/activos',
           puestos_por_estado: 'GET /api/puestos?estado=pendiente|aprobado|activo|inactivo',
           puestos_por_emprendedor: 'GET /api/puestos/emprendedor/:emprendedorId',
           
-          // Gestión de estado (flujo de trabajo)
+          // Control de estado
           aprobar_puesto: 'PATCH /api/puestos/:id/estado (solo organizadores, estado: "aprobado")',
           activar_puesto: 'PATCH /api/puestos/:id/estado (solo organizadores, estado: "activo")',
           inactivar_puesto: 'PATCH /api/puestos/:id/estado (dueño u organizador, estado: "inactivo")',
@@ -127,7 +126,7 @@ export class AppController {
         }
       ],
       
-      // ==================== USUARIOS POR DEFECTO ====================
+      // ==================== EJEMPLOS YA LISTOS ====================
       usuarios_por_defecto: {
         organizador: {
           email: 'admin@feria.com',
@@ -158,3 +157,5 @@ export class AppController {
     };
   }
 }
+
+//esto es una pequena documentacion de acceso para cada endpoint organizados cada uno

@@ -7,38 +7,40 @@ export class CustomHttpService {
   constructor(private readonly httpService: HttpService) {}
 
   private getBaseUrl(): string {
-    // TODO: En producción, esto debería apuntar al microservicio de usuarios real
-    // Por ahora, todo está en el mismo servidor
+    //Todo se encuentra en el mismo servidor
     return 'http://localhost:3000/api';
   }
 
+  //valida el token con las funciones de autenticacion
   async validarToken(token: string): Promise<any> {
     try {
-      console.log('🔐 Validando token...');
+      console.log('Validando token...');
       
+      //realiza un GET al endpoint de validacion de token
       const response = await firstValueFrom(
         this.httpService.get(`${this.getBaseUrl()}/usuarios/validar-token`, {
           headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${token}`,//se envia el token de tipo bearer token
+            'Content-Type': 'application/json'// aqui especificamos que es un json
           }
         })
       );
       
-      console.log('✅ Token validado:', response.data.valido);
+      console.log('Token validado:', response.data.valido);//mensaje de vlidacion
       return response.data;
     } catch (error) {
-      console.error('❌ Error validando token:', error.message);
+      console.error('Error validando token:', error.message);//mensaje de error
       return { 
         valido: false, 
-        error: 'Error de comunicación con el servicio de autenticación'
+        error: 'Error de comunicación con el servicio de autenticación'//mensaje de error de coenxion
       };
     }
   }
 
+  //valida si tiene un rol ese token
   async validarTokenYRol(token: string, rol: string): Promise<boolean> {
     try {
-      console.log(`🔐 Validando token para rol: ${rol}`);
+      console.log(`Validando token para rol: ${rol}`);
       
       const response = await firstValueFrom(
         this.httpService.get(`${this.getBaseUrl()}/usuarios/validar/${rol}`, {
@@ -51,11 +53,12 @@ export class CustomHttpService {
       
       return response.data.valido === true;
     } catch (error) {
-      console.error('❌ Error validando token y rol:', error.message);
+      console.error('Error validando token y rol:', error.message);
       return false;
     }
   }
 
+  //obtiene la informacion de un usuario usando su token
   async obtenerUsuarioDesdeToken(token: string): Promise<any> {
     try {
       console.log('👤 Obteniendo usuario desde token...');
@@ -71,11 +74,11 @@ export class CustomHttpService {
       
       return response.data;
     } catch (error) {
-      console.error('❌ Error obteniendo usuario desde token:', error.message);
+      console.error('Error obteniendo usuario desde token:', error.message);
       throw new Error('Usuario no autenticado');
     }
   }
-
+  //verificacamos si un usuario tiene un rol determinado
   async verificarUsuarioYRol(usuarioId: string, rol: string): Promise<boolean> {
     try {
       console.log(`🔍 Verificando usuario ${usuarioId} con rol ${rol}`);
@@ -90,8 +93,11 @@ export class CustomHttpService {
       
       return response.data.valido === true;
     } catch (error) {
-      console.error('❌ Error verificando usuario y rol:', error.message);
+      console.error('Error verificando usuario y rol:', error.message);
       return false;
     }
   }
 }
+
+//Este .ts encapsula la logica del HTTP para otros microservicios
+//siendo cosas como validacion, verificacion de roles e informacion de usuarios
