@@ -2,4 +2,4 @@ export class LoginDto {
   email: string;
   password: string;
 }
-//datos para inciiar la sesion
+//datos para iniciar la sesion

@@ -1,9 +1,18 @@
 import { Module } from '@nestjs/common';
-import { PuestosModule } from './puestos/puestos.module';
 import { AppController } from './app.controller';
-// Este archivo se encarga de importa todos los demás módulos y declara controladores globales.
+import { AppService } from './app.service';
+import { PuestosModule } from './puestos/puestos.module';
+import { UsuariosModule } from './usuarios/usuarios.module'; 
+import { CustomHttpModule } from './common/http/http.module';
+
 @Module({
-  imports: [PuestosModule],//importa
-  controllers: [AppController],//controladores globales
+  imports: [
+    CustomHttpModule,//modulo de comunicacion entre microservicios
+    PuestosModule,//gestion de puestos
+    UsuariosModule, // gestion d eusuario sy autticacion
+  ],
+  controllers: [AppController],//control que sirve como API gateway
+  providers: [AppService],//servicio prinicpal de la aplicacion
 })
 export class AppModule {}
+//organiza y exporta los componenetes relaciones del sistema en general de la feria de comida

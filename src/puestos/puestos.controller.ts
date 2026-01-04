@@ -1,4 +1,4 @@
-import { //los diferentes comandos para el postman
+import { 
   Controller, 
   Get, 
   Post, 
@@ -9,128 +9,106 @@ import { //los diferentes comandos para el postman
   Query,
   Headers,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  UnauthorizedException 
 } from '@nestjs/common';
 import { PuestosService } from './puestos.service';
 import { CreatePuestoDto } from './dto/create-puesto.dto';
 import { UpdatePuestoDto } from './dto/update-puesto.dto';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
 
-//se encarga de manejar las rutas HTTP
 @Controller('puestos')
 export class PuestosController {
   constructor(private readonly puestosService: PuestosService) {}
 
-  // el CRUD 
-  // crear un nuevo puesto
-  @Post()
-  @HttpCode(HttpStatus.CREATED)//deberia devolver el codigo 201 en caso de ser creado
-  create(
-    @Body() createPuestoDto: CreatePuestoDto,
-    @Headers('x-user-id') userId: string,  // tanto este 
-    @Headers('x-user-rol') userRol: string  // como este son temporales, nesecitamos implementar el microservicio 1
-  ) {
-    // Nota: Este header vendría del API Gateway después de validar JWT y Verificar con microservicio 1 que el usuario existe y es emprendedor
-    
-    if (!userId) {//verficadores
-      return { error: 'Se requiere autenticación' };
+  //aqui extraemos el token
+  private extraerToken(authHeader: string): string {
+    if (!authHeader) {
+      throw new UnauthorizedException('Token no proporcionado');
     }
     
-    if (userRol !== 'emprendedor') {//verficadores
-      return { error: 'Solo emprendedores pueden crear puestos' };
+    const parts = authHeader.split(' ');
+    
+    if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
+      return parts[1];
     }
     
-    // Forzar que el emprendedorId sea el usuario autenticado
-    createPuestoDto.emprendedorId = userId;
-    
-    return this.puestosService.create(createPuestoDto);
+    return parts[0];
   }
 
-  //nos da todos lo puestos
-  @Get()
+  
+  @Post()//creamos un nuevo puesto
+  @HttpCode(HttpStatus.CREATED)
+  create(
+    @Body() createPuestoDto: CreatePuestoDto,
+    @Headers('authorization') authHeader: string
+  ) {
+    console.log('Recibida petición para crear puesto');
+    const token = this.extraerToken(authHeader);
+    return this.puestosService.create(createPuestoDto, token);
+  }
+
+  
+  @Get()//vemos todos los puestos, podemos filtrarlo por estado tambien
   findAll(@Query('estado') estado?: string) {
     if (estado) {
       return this.puestosService.findByEstado(estado);
     }
     return this.puestosService.findAll();
   }
-  //nos da los puestos activos
-  @Get('activos')
+
+  @Get('activos')//puesto activos
   findActivos() {
     return this.puestosService.findActivos();
   }
-  //nos da los puestos por ID
-  @Get(':id')
+
+  @Get(':id')//puestos por id
   findOne(@Param('id') id: string) {
     return this.puestosService.findOne(id);
   }
-  //actualiza los puestos pero solo puede el dueno
-  @Patch(':id')
+
+  @Patch(':id')//actualizacion de puestos existentes
   update(
     @Param('id') id: string, 
     @Body() updatePuestoDto: UpdatePuestoDto,
     @Headers('x-user-id') userId: string,
     @Headers('x-user-rol') userRol: string
   ) {
-    //Nota: Validación real con microservicio 1
-    if (!userId) {
-      return { error: 'Se requiere autenticación' };
-    }
-    
     return this.puestosService.update(id, updatePuestoDto, userId);
   }
-  //borra el puesto si eres el dueno y lo tienes en pendiente
-  @Delete(':id')
+
+  @Delete(':id')//borra un puesto
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id') id: string,
     @Headers('x-user-id') userId: string,
     @Headers('x-user-rol') userRol: string
   ) {
-    //Nota: Validación real con microservicio 1
-    if (!userId) {
-      return { error: 'Se requiere autenticación' };
-    }
-    
     return this.puestosService.remove(id, userId);
   }
 
-  //  ENDPOINTS ESPECÍFICOS 
-  //verifica si esta activo para otros microservicios
-  @Get('emprendedor/:emprendedorId')
+  @Get('emprendedor/:emprendedorId')//obtener todos los puestos de un emprededor en especifico
   findByEmprendedor(@Param('emprendedorId') emprendedorId: string) {
     return this.puestosService.findByEmprendedor(emprendedorId);
   }
-  //cambia el estado del puesto
-  @Patch(':id/estado')
+
+  @Patch(':id/estado')//cambiar el estado del puesto
   cambiarEstado(
     @Param('id') id: string, 
     @Body() cambiarEstadoDto: CambiarEstadoDto,
     @Headers('x-user-id') userId: string,
     @Headers('x-user-rol') userRol: string
   ) {
-    //Nota: Validación real con microservicio 1
-    if (!userId) {
-      return { error: 'Se requiere autenticación' };
-    }
-    
-    if (!userRol) {
-      return { error: 'Se requiere información de rol' };
-    }
-    
     return this.puestosService.cambiarEstado(id, cambiarEstadoDto, userId, userRol);
   }
 
-  //  ENDPOINTS PARA OTROS MICROSERVICIOS 
-  // Nota: Estos serían llamados por el API Gateway u otros microservicios
- 
-  //verifica si un puesto está activo (para otros microservicios)
-  @Get(':id/verificar-activo')
+  
+  @Get(':id/verificar-activo')//ver si un puesto esta activo
   verificarPuestoActivo(@Param('id') id: string) {
     return this.puestosService.verificarPuestoActivo(id);
   }
-  //verifica si un emprendedor es dueño de un puesto (para otros microservicios)
-  @Get(':id/verificar-propiedad/:emprendedorId')
+
+  @Get(':id/verificar-propiedad/:emprendedorId')//verifica si un emprededor es dueno de un puesto
   verificarPropiedad(
     @Param('id') id: string,
     @Param('emprendedorId') emprendedorId: string
@@ -138,9 +116,12 @@ export class PuestosController {
     const esPropietario = this.puestosService.verificarPropiedad(id, emprendedorId);
     return { esPropietario };
   }
-  //verificar para un pedido
-  @Get(':id/validar-para-pedido')
+
+  @Get(':id/validar-para-pedido')//ve si un puesto puede recibir pedidos
   validarPuestoParaPedido(@Param('id') id: string) {
     return this.puestosService.validarPuestoParaPedido(id);
   }
 }
+
+//Este .ts almacena todas operaciones CRUD para los puestos
+//ya sea eliminarlo, crearlo, buscarlo, actualizarlo y etc

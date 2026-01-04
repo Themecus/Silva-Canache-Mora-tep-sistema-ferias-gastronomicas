@@ -30,8 +30,7 @@ export class UsuariosService {
     console.log('Usuarios por defecto cargados:', this.usuarios.length);
   }
 
-  // aqui abra un CRUD basico
-
+  // creamos al usuario
   create(createUsuarioDto: CreateUsuarioDto): Usuario {
     const usuarioExistente = this.usuarios.find(u => u.email === createUsuarioDto.email);
     if (usuarioExistente) {
@@ -63,11 +62,11 @@ export class UsuariosService {
     this.usuarios.push(usuario);
     return usuario;
   }
-
+  //obtenemos a todos los usuarios
   findAll(): Usuario[] {
     return this.usuarios;
   }
-
+  //obtenemos solo un usuario por ID  
   findOne(id: string): Usuario {
     const usuario = this.usuarios.find(u => u.id === id);
     if (!usuario) {
@@ -75,11 +74,11 @@ export class UsuariosService {
     }
     return usuario;
   }
-
+  //buscamos por email
   findByEmail(email: string): Usuario | undefined {
     return this.usuarios.find(u => u.email === email);
   }
-
+  //actualizamos al usuario
   update(id: string, updateUsuarioDto: UpdateUsuarioDto): Usuario {
     const usuario = this.findOne(id);
     
@@ -100,7 +99,7 @@ export class UsuariosService {
     usuario.actualizadoEn = new Date();
     return usuario;
   }
-
+  //borammos usuario
   remove(id: string): Usuario {
     const usuario = this.findOne(id);
     usuario.activo = false;
@@ -108,8 +107,8 @@ export class UsuariosService {
     return usuario;
   }
 
-  // de aqui el apartado de autenticacion
 
+  //registra un nuevo usuario y crea un token
   registrar(registroDto: RegistroDto) {
     // aprovechamos el metodo create ya existente
     const usuario = this.create({
@@ -129,6 +128,7 @@ export class UsuariosService {
     };
   }
 
+  //lo autentifica y genera el token
   login(loginDto: LoginDto) {
     const usuario = this.validarCredenciales(loginDto.email, loginDto.password);
 
@@ -147,7 +147,7 @@ export class UsuariosService {
       token
     };
   }
-
+//comprueba credenciales
   validarCredenciales(email: string, password: string): Usuario | null {
     const usuario = this.findByEmail(email);
     
@@ -160,7 +160,7 @@ export class UsuariosService {
     }
     return null;
   }
-
+  //valida el token, si experio o no
   validarToken(token: string): TokenPayload | null {
     const payload = this.tokens.get(token);
     
@@ -175,7 +175,7 @@ export class UsuariosService {
 
     return payload;
   }
-
+  //nos da al usuario en base su token
   obtenerUsuarioDesdeToken(token: string) {
     const payload = this.validarToken(token);
     
@@ -185,11 +185,11 @@ export class UsuariosService {
     
     return this.obtenerInfoSegura(payload.sub);
   }
-
+  //ciera sesion del usuario y invalida su token
   logout(token: string): boolean {
     return this.tokens.delete(token);
   }
-
+  //verifica si un token tiene un rol en especifico
   verificarTokenYRol(token: string, rolEsperado: string): boolean {
     const payload = this.validarToken(token);
     
@@ -199,7 +199,7 @@ export class UsuariosService {
     
     return payload.rol === rolEsperado;
   }
-
+  //nos da el ID usando el TOKEN
   obtenerUserIdDesdeToken(token: string): string | null {
     const payload = this.validarToken(token);
     return payload ? payload.sub : null;
@@ -207,6 +207,7 @@ export class UsuariosService {
 
   // funciones extras
 
+  //verificamos si un usuario tiene un rol en concreto
   verificarUsuarioYRol(usuarioId: string, rolEsperado: string): boolean {
     try {
       const usuario = this.findOne(usuarioId);
@@ -215,16 +216,16 @@ export class UsuariosService {
       return false;
     }
   }
-
+  //obtiene infromacion del usuario, incluido contrasena
   obtenerInfoSegura(usuarioId: string) {
     const usuario = this.findOne(usuarioId);
     return usuario.getInfoSegura();
   }
-
+  //busca por rol
   findByRol(rol: RolUsuario): Usuario[] {
     return this.usuarios.filter(u => u.rol === rol && u.activo);
   }
-
+  //contabiliza usuarios
   contarUsuarios(): { total: number; porRol: Record<string, number> } {
     const porRol: Record<string, number> = {};
     
@@ -238,7 +239,7 @@ export class UsuariosService {
       porRol
     };
   }
-
+  //esto genera el token
   private generarToken(usuario: Usuario): string {
     const token = `token-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     
@@ -254,9 +255,10 @@ export class UsuariosService {
     
     return token;
   }
-
+  //Omite la contraseña de un usuario para respuestas públicas
   private omitirPassword(usuario: Usuario) {
     const { password, ...usuarioSinPassword } = usuario;
     return usuarioSinPassword;
   }
 }
+//contiene toda la logica se usuario, ya sea el CRUD, los registros y login, generacion y control de tokens, verficaciones y permisos

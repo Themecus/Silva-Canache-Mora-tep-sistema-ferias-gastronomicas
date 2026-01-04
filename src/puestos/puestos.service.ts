@@ -3,34 +3,75 @@ import { CreatePuestoDto } from './dto/create-puesto.dto';
 import { UpdatePuestoDto } from './dto/update-puesto.dto';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
 import { Puesto } from './entities/puesto.entity';
-
-
-//este archivo contendra toda la logica de negocio, validdaciones, CRUD para los puestos
+import { CustomHttpService } from '../common/http/http.service';
 
 @Injectable()
 export class PuestosService {
-  private puestos: Puesto[] = [];//almacen de puestos
+  private puestos: Puesto[] = [];
 
-  // en esta parte estara el CRUD 
-  
-  create(createPuestoDto: CreatePuestoDto): Puesto {
-    //  ojo: Verificar con microservicio 1 que emprendedorId existe y  Verificar que el usuario tenga rol 'emprendedor'
+  constructor(private readonly httpService: CustomHttpService) {
+    console.log('PuestosService inicializado con HTTP Service');
+  }
+
+
+  //valida tokens y extrae infromacion de usuario
+  private async validarYExtraerUsuario(token: string): Promise<{ id: string; rol: string; email: string }> {
+    console.log('Validando token para operación...');
     
+    if (!token || token === 'null' || token === 'undefined') {
+      throw new BadRequestException('Token no proporcionado');
+    }
+
+    const validacion = await this.httpService.validarToken(token);
+    
+    if (!validacion || !validacion.valido) {
+      console.log('Token inválido:', validacion);
+      throw new BadRequestException('Token inválido o expirado');
+    }
+
+    console.log('Token válido para usuario:', validacion.usuario.email);
+    
+    return {
+      id: validacion.usuario.id,
+      rol: validacion.usuario.rol,
+      email: validacion.usuario.email
+    };
+  }
+
+  //crea puestos
+  async create(createPuestoDto: CreatePuestoDto, token: string): Promise<Puesto> {
+    console.log('Creando puesto con token real...');
+    
+    const usuario = await this.validarYExtraerUsuario(token);
+    
+    if (usuario.rol !== 'emprendedor') {
+      throw new BadRequestException(`Solo emprendedores pueden crear puestos. Tu rol es: ${usuario.rol}`);
+    }
+
+    const puestoExistente = this.puestos.find(
+      p => p.emprendedorId === usuario.id
+    );
+
+    if (puestoExistente) {
+      throw new BadRequestException('El emprendedor ya tiene un puesto registrado');
+    }
+
     const puesto = new Puesto(
       createPuestoDto.nombre,
       createPuestoDto.color,
-      createPuestoDto.emprendedorId
+      usuario.id
     );
     
     this.puestos.push(puesto);
+    console.log('Puesto creado para usuario:', usuario.email);
     return puesto;
   }
-  //este se encarga de obtener todos los puestos que existan
+
+  //busca todos los puestos
   findAll(): Puesto[] {
     return this.puestos;
   }
-
-  //busca un puesto en base a la ID
+  //busca por ID
   findOne(id: string): Puesto {
     const puesto = this.puestos.find(puesto => puesto.id === id);
     if (!puesto) {
@@ -38,19 +79,29 @@ export class PuestosService {
     }
     return puesto;
   }
+  //Busca por emprendedor
+  findByEmprendedor(emprendedorId: string): Puesto[] {
+    return this.puestos.filter(puesto => puesto.emprendedorId === emprendedorId);
+  }
+  //busca por estado
+  findByEstado(estado: string): Puesto[] {
+    return this.puestos.filter(puesto => puesto.estado === estado);
+  }
+  //Busca los activos
+  findActivos(): Puesto[] {
+    return this.puestos.filter(puesto => 
+      puesto.estado === 'activo' && puesto.disponible === true
+    );
+  }
 
-  //  funcionalidades varias a partir de aqui
-  
-  // aqui podemos un editar puesto pero solo podra el  dueño
+  //actualiza puestos que existan
   update(id: string, updatePuestoDto: UpdatePuestoDto, usuarioId: string): Puesto {
     const puesto = this.findOne(id);
     
-    //ojo: Verificar con microservicio 1 el token/rol
     if (!puesto.puedeEditar(usuarioId)) {
       throw new BadRequestException('Solo el dueño puede editar este puesto');
     }
     
-    // Validar que no se edite si está activo
     if (puesto.estado === 'activo') {
       throw new BadRequestException('No se puede editar un puesto activo');
     }
@@ -66,16 +117,27 @@ export class PuestosService {
     puesto.actualizadoEn = new Date();
     return puesto;
   }
-
-  // Aqui cambiaremos el estado (aprobacion/activacion/inactivacion)
+  //borra un puesto
+  remove(id: string, usuarioId: string): void {
+    const puesto = this.findOne(id);
+    
+    if (!puesto.puedeEditar(usuarioId)) {
+      throw new BadRequestException('Solo el dueño puede eliminar este puesto');
+    }
+    
+    if (puesto.estado !== 'pendiente') {
+      throw new BadRequestException('Solo se pueden eliminar puestos en estado pendiente');
+    }
+    
+    const index = this.puestos.findIndex(puesto => puesto.id === id);
+    this.puestos.splice(index, 1);
+  }
+  //cambia el estado del puesto
   cambiarEstado(id: string, cambiarEstadoDto: CambiarEstadoDto, usuarioId: string, usuarioRol: string): Puesto {
     const puesto = this.findOne(id);
     
-    // ojo: Verificar con microservicio 1 el token/rol
-    
     switch (cambiarEstadoDto.estado) {
       case 'aprobado':
-        // Solo organizadores pueden aprobar
         if (usuarioRol !== 'organizador') {
           throw new BadRequestException('Solo organizadores pueden aprobar puestos');
         }
@@ -86,7 +148,6 @@ export class PuestosService {
         break;
         
       case 'activo':
-        // Solo organizadores pueden activar
         if (usuarioRol !== 'organizador') {
           throw new BadRequestException('Solo organizadores pueden activar puestos');
         }
@@ -97,8 +158,6 @@ export class PuestosService {
         break;
         
       case 'inactivo':
-        // Emprendedores pueden inactivar sus puestos
-        // Organizadores pueden inactivar cualquier puesto
         if (usuarioRol === 'emprendedor' && !puesto.puedeEditar(usuarioId)) {
           throw new BadRequestException('No puedes inactivar un puesto que no es tuyo');
         }
@@ -112,46 +171,7 @@ export class PuestosService {
     return puesto;
   }
 
-  //esto solo borra puestos
-  remove(id: string, usuarioId: string): void {
-    const puesto = this.findOne(id);
-    
-    // Solo dueño puede eliminar
-    if (!puesto.puedeEditar(usuarioId)) {
-      throw new BadRequestException('Solo el dueño puede eliminar este puesto');
-    }
-    
-    // Solo se puede eliminar si está pendiente
-    if (puesto.estado !== 'pendiente') {
-      throw new BadRequestException('Solo se pueden eliminar puestos en estado pendiente');
-    }
-    
-    const index = this.puestos.findIndex(puesto => puesto.id === id);
-    this.puestos.splice(index, 1);
-  }
-
-  //  Consultas concretas 
-  
-  // Busca por emprendedor
-  findByEmprendedor(emprendedorId: string): Puesto[] {
-    return this.puestos.filter(puesto => puesto.emprendedorId === emprendedorId);
-  }
-
-  // Busca por estado
-  findByEstado(estado: string): Puesto[] {
-    return this.puestos.filter(puesto => puesto.estado === estado);
-  }
-
-  // Busca por actividad
-  findActivos(): Puesto[] {
-    return this.puestos.filter(puesto => 
-      puesto.estado === 'activo' && puesto.disponible === true
-    );
-  }
-
-  //  comunicacion con otros servicios
-  
-  // verifica si un puesto esta activo
+  //verifica si el estado de un puesto es activo  
   verificarPuestoActivo(puestoId: string): { activo: boolean; puesto?: Puesto } {
     try {
       const puesto = this.findOne(puestoId);
@@ -163,8 +183,7 @@ export class PuestosService {
       return { activo: false };
     }
   }
-
-  // verifica si un emprendor es dueno de ese puesto
+  //verifica si un emprendedor es dueno de un puesto
   verificarPropiedad(puestoId: string, emprendedorId: string): boolean {
     try {
       const puesto = this.findOne(puestoId);
@@ -173,9 +192,7 @@ export class PuestosService {
       return false;
     }
   }
-
-  //  ojo: Endpoint para API Gateway/comunicación entre microservicios
-  // Este endpoint sería llamado por el API Gateway u otros microservicios
+  //verifica si un puesto puede recibir pedidos
   validarPuestoParaPedido(puestoId: string): { valido: boolean; motivo?: string } {
     try {
       const puesto = this.findOne(puestoId);
@@ -194,3 +211,5 @@ export class PuestosService {
     }
   }
 }
+
+//aqui en este .ts se gestiona todo lo que seria: CRUD, validacion de permisos, cambios de estado, comunicacion

@@ -54,3 +54,5 @@ export class Puesto {
     return rol === 'organizador';
   }
 }
+
+//este .ts se encarga de modelar un puesto con todo lo que implica
