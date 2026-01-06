@@ -23,14 +23,14 @@ import { RolUsuario } from './entities/usuario.entity';
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  //Aqui estaran todos los gets
-  //nos da el perfil autenticado
+  // Añade async y await a los métodos que llaman servicios asíncronos
+
   @Get('perfil')
-  obtenerPerfil(@Headers('authorization') authHeader: string) {
+  async obtenerPerfil(@Headers('authorization') authHeader: string) {
     const token = this.extraerToken(authHeader);
-    return this.usuariosService.obtenerUsuarioDesdeToken(token);
+    return await this.usuariosService.obtenerUsuarioDesdeToken(token);
   }
-  //valida tokens
+
   @Get('validar-token')
   validarToken(@Headers('authorization') authHeader: string) {
     const token = this.extraerToken(authHeader);
@@ -50,7 +50,7 @@ export class UsuariosController {
       }
     };
   }
-  //valida si el token tiene un rol especifico
+
   @Get('validar/:rol')
   validarTokenYRol(
     @Headers('authorization') authHeader: string,
@@ -60,99 +60,86 @@ export class UsuariosController {
     const esValido = this.usuariosService.verificarTokenYRol(token, rol);
     return { valido: esValido };
   }
-  //nos da estadisticas de usarios
+
   @Get('estadisticas')
-  getEstadisticas() {
-    return this.usuariosService.contarUsuarios();
+  async getEstadisticas() {
+    return await this.usuariosService.contarUsuarios();
   }
-  //busca por email
+
+  // CORREGIDO: Añadido async/await
   @Get('email/:email')
-  findByEmail(@Param('email') email: string) {
-    const usuario = this.usuariosService.findByEmail(email);
+  async findByEmail(@Param('email') email: string) {
+    const usuario = await this.usuariosService.findByEmail(email);
     if (!usuario) {
       return { encontrado: false };
     }
     return { encontrado: true, usuario: usuario.getInfoSegura() };
   }
-  //nos da todos los usuarios y podemos filtrarlo por roles
+
   @Get()
-  findAll(@Query('rol') rol?: string) {
+  async findAll(@Query('rol') rol?: string) {
     if (rol) {
       const rolEnum = this.convertirStringARol(rol);
-      return this.usuariosService.findByRol(rolEnum);
+      return await this.usuariosService.findByRol(rolEnum);
     }
     
-    return this.usuariosService.findAll();
-  }
-  //por id
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usuariosService.obtenerInfoSegura(id);
+    return await this.usuariosService.findAll();
   }
 
-  //verifica si un usuario tiene un rol en concreto
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return await this.usuariosService.obtenerInfoSegura(id);
+  }
+
   @Get('verificar/:usuarioId/:rol')
-  verificarUsuarioYRol(
+  async verificarUsuarioYRol(
     @Param('usuarioId') usuarioId: string,
     @Param('rol') rol: string
   ) {
-    const valido = this.usuariosService.verificarUsuarioYRol(usuarioId, rol);
+    const valido = await this.usuariosService.verificarUsuarioYRol(usuarioId, rol);
     return { valido };
   }
-  // aqui los post
 
-  //registra un usuario en el sistema
   @Post('registro')
   @HttpCode(HttpStatus.CREATED)
-  registrar(@Body() registroDto: RegistroDto) {
-    return this.usuariosService.registrar(registroDto);
-  }
-  //logea al usuaario, osea inicia el sistema al usuario
-  @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.usuariosService.login(loginDto);
+  async registrar(@Body() registroDto: RegistroDto) {
+    return await this.usuariosService.registrar(registroDto);
   }
 
-  //creamos un nuevo usuario
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    return await this.usuariosService.login(loginDto);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createUsuarioDto: CreateUsuarioDto) {
-    return this.usuariosService.create(createUsuarioDto);
+  async create(@Body() createUsuarioDto: CreateUsuarioDto) {
+    return await this.usuariosService.create(createUsuarioDto);
   }
 
-  // cerramos sesion para el usuario
   @Post('logout')
   logout(@Headers('authorization') authHeader: string) {
-  console.log('Peticion de logout recibida');
-  const token = this.extraerToken(authHeader);
-  const exitoso = this.usuariosService.logout(token);
-  return { logout: exitoso };
+    console.log('Petición de logout recibida');
+    const token = this.extraerToken(authHeader);
+    const exitoso = this.usuariosService.logout(token);
+    return { logout: exitoso };
   }
 
-//el patch
-
-//modificamos al usuario
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateUsuarioDto: UpdateUsuarioDto
   ) {
-    return this.usuariosService.update(id, updateUsuarioDto);
+    return await this.usuariosService.update(id, updateUsuarioDto);
   }
 
-//delete o borrar
-
-//borramos al usuario
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    this.usuariosService.remove(id);
+  async remove(@Param('id') id: string) {
+    await this.usuariosService.remove(id);
   }
 
-
-
-  // unos metodos complementarios
-  //Convierte un string a enum RolUsuario
+  // Métodos auxiliares (sin cambios)
   private convertirStringARol(rolString: string): RolUsuario {
     switch (rolString.toLowerCase()) {
       case 'cliente': return RolUsuario.CLIENTE;
@@ -161,7 +148,7 @@ export class UsuariosController {
       default: return RolUsuario.CLIENTE;
     }
   }
-  //nos ayuyda a extraer el token del header de autorizacion de postman
+
   private extraerToken(authHeader: string): string {
     if (!authHeader) {
       throw new UnauthorizedException('Token no proporcionado');
@@ -176,6 +163,3 @@ export class UsuariosController {
     return parts[0];
   }
 }
-
-//este .ts controlara la gestion de usarios, ya sea cosas como registros, login/logut
-//tambien el tema de los token, CRUD para usairios y consultas

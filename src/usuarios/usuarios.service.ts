@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { Usuario, RolUsuario } from './entities/usuario.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegistroDto } from './dto/registro.dto';
+import * as bcrypt from 'bcrypt';
 
-// iterface para el tema de los token 
 interface TokenPayload {
   sub: string;
   email: string;
@@ -16,30 +18,63 @@ interface TokenPayload {
 
 @Injectable()
 export class UsuariosService {
-  private usuarios: Usuario[] = [];
   private tokens: Map<string, TokenPayload> = new Map();
 
-  private usuariosPorDefecto = [
-    new Usuario('admin@feria.com', 'admin123', 'Admin', 'Sistema', RolUsuario.ORGANIZADOR, '3001234567'),
-    new Usuario('cliente@ejemplo.com', 'cliente123', 'Carlos', 'Lopez', RolUsuario.CLIENTE, '3007654321'),
-    new Usuario('emprendedor@ejemplo.com', 'emprendedor123', 'Maria', 'Gomez', RolUsuario.EMPRENDEDOR, '3001122334')
-  ];
-
-  constructor() {
-    this.usuarios.push(...this.usuariosPorDefecto);
-    console.log('Usuarios por defecto cargados:', this.usuarios.length);
+  constructor(
+    @InjectRepository(Usuario)
+    private usuarioRepository: Repository<Usuario>,
+  ) {
+    this.cargarUsuariosPorDefecto();
   }
 
-  // creamos al usuario
-  create(createUsuarioDto: CreateUsuarioDto): Usuario {
-    const usuarioExistente = this.usuarios.find(u => u.email === createUsuarioDto.email);
+  private async cargarUsuariosPorDefecto() {
+    const count = await this.usuarioRepository.count();
+    
+    if (count === 0) {
+      const usuariosPorDefecto = [
+        this.usuarioRepository.create({
+          email: 'admin@feria.com',
+          password: await bcrypt.hash('admin123', 10),
+          nombre: 'Admin',
+          apellido: 'Sistema',
+          rol: RolUsuario.ORGANIZADOR,
+          telefono: '3001234567',
+        }),
+        this.usuarioRepository.create({
+          email: 'cliente@ejemplo.com',
+          password: await bcrypt.hash('cliente123', 10),
+          nombre: 'Carlos',
+          apellido: 'Lopez',
+          rol: RolUsuario.CLIENTE,
+          telefono: '3007654321',
+        }),
+        this.usuarioRepository.create({
+          email: 'emprendedor@ejemplo.com',
+          password: await bcrypt.hash('emprendedor123', 10),
+          nombre: 'Maria',
+          apellido: 'Gomez',
+          rol: RolUsuario.EMPRENDEDOR,
+          telefono: '3001122334',
+        }),
+      ];
+
+      await this.usuarioRepository.save(usuariosPorDefecto);
+      console.log('Usuarios por defecto cargados');
+    }
+  }
+
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    const usuarioExistente = await this.usuarioRepository.findOne({
+      where: { email: createUsuarioDto.email }
+    });
+    
     if (usuarioExistente) {
-      throw new BadRequestException('El email ya esta registrado');
+      throw new BadRequestException('El email ya está registrado');
     }
 
     const rolesValidos = ['cliente', 'emprendedor', 'organizador'];
     if (!rolesValidos.includes(createUsuarioDto.rol)) {
-      throw new BadRequestException(`Rol no valido. Use: ${rolesValidos.join(', ')}`);
+      throw new BadRequestException(`Rol no válido. Use: ${rolesValidos.join(', ')}`);
     }
 
     let rolEnum: RolUsuario;
@@ -50,68 +85,68 @@ export class UsuariosService {
       default: rolEnum = RolUsuario.CLIENTE;
     }
 
-    const usuario = new Usuario(
-      createUsuarioDto.email,
-      createUsuarioDto.password,
-      createUsuarioDto.nombre,
-      createUsuarioDto.apellido,
-      rolEnum,
-      createUsuarioDto.telefono
-    );
+    const usuario = this.usuarioRepository.create({
+      ...createUsuarioDto,
+      password: await bcrypt.hash(createUsuarioDto.password, 10),
+      rol: rolEnum,
+    });
 
-    this.usuarios.push(usuario);
-    return usuario;
+    return await this.usuarioRepository.save(usuario);
   }
-  //obtenemos a todos los usuarios
-  findAll(): Usuario[] {
-    return this.usuarios;
+
+  async findAll(): Promise<Usuario[]> {
+    return await this.usuarioRepository.find({ where: { activo: true } });
   }
-  //obtenemos solo un usuario por ID  
-  findOne(id: string): Usuario {
-    const usuario = this.usuarios.find(u => u.id === id);
+
+  async findOne(id: string): Promise<Usuario> {
+    const usuario = await this.usuarioRepository.findOne({ where: { id } });
+    
     if (!usuario) {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
+    
     return usuario;
   }
-  //buscamos por email
-  findByEmail(email: string): Usuario | undefined {
-    return this.usuarios.find(u => u.email === email);
+
+  async findByEmail(email: string): Promise<Usuario | null> {
+    return await this.usuarioRepository.findOne({ where: { email } });
   }
-  //actualizamos al usuario
-  update(id: string, updateUsuarioDto: UpdateUsuarioDto): Usuario {
-    const usuario = this.findOne(id);
+
+  async update(id: string, updateUsuarioDto: UpdateUsuarioDto): Promise<Usuario> {
+    const usuario = await this.findOne(id);
     
     if (updateUsuarioDto.email && updateUsuarioDto.email !== usuario.email) {
-      const emailExistente = this.usuarios.find(u => u.email === updateUsuarioDto.email && u.id !== id);
-      if (emailExistente) {
-        throw new BadRequestException('El email ya esta en uso por otro usuario');
+      const emailExistente = await this.usuarioRepository.findOne({
+        where: { email: updateUsuarioDto.email }
+      });
+      
+      if (emailExistente && emailExistente.id !== id) {
+        throw new BadRequestException('El email ya está en uso por otro usuario');
       }
+      
       usuario.email = updateUsuarioDto.email;
     }
 
-    if (updateUsuarioDto.password) usuario.password = updateUsuarioDto.password;
+    if (updateUsuarioDto.password) {
+      usuario.password = await bcrypt.hash(updateUsuarioDto.password, 10);
+    }
+    
     if (updateUsuarioDto.nombre) usuario.nombre = updateUsuarioDto.nombre;
     if (updateUsuarioDto.apellido) usuario.apellido = updateUsuarioDto.apellido;
     if (updateUsuarioDto.telefono !== undefined) usuario.telefono = updateUsuarioDto.telefono;
     if (updateUsuarioDto.activo !== undefined) usuario.activo = updateUsuarioDto.activo;
 
-    usuario.actualizadoEn = new Date();
-    return usuario;
+    return await this.usuarioRepository.save(usuario);
   }
-  //borammos usuario
-  remove(id: string): Usuario {
-    const usuario = this.findOne(id);
+
+  async remove(id: string): Promise<Usuario> {
+    const usuario = await this.findOne(id);
     usuario.activo = false;
-    usuario.actualizadoEn = new Date();
-    return usuario;
+    return await this.usuarioRepository.save(usuario);
   }
 
-
-  //registra un nuevo usuario y crea un token
-  registrar(registroDto: RegistroDto) {
-    // aprovechamos el metodo create ya existente
-    const usuario = this.create({
+  async registrar(registroDto: RegistroDto) {
+    const usuario = await this.create({
       email: registroDto.email,
       password: registroDto.password,
       nombre: registroDto.nombre,
@@ -128,12 +163,11 @@ export class UsuariosService {
     };
   }
 
-  //lo autentifica y genera el token
-  login(loginDto: LoginDto) {
-    const usuario = this.validarCredenciales(loginDto.email, loginDto.password);
+  async login(loginDto: LoginDto) {
+    const usuario = await this.validarCredenciales(loginDto.email, loginDto.password);
 
     if (!usuario) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
     if (!usuario.activo) {
@@ -147,20 +181,24 @@ export class UsuariosService {
       token
     };
   }
-//comprueba credenciales
-  validarCredenciales(email: string, password: string): Usuario | null {
-    const usuario = this.findByEmail(email);
+
+  async validarCredenciales(email: string, password: string): Promise<Usuario | null> {
+    const usuario = await this.findByEmail(email);
     
     if (!usuario || !usuario.activo) {
       return null;
     }
     
-    if (usuario.password === password) {
+    const esPasswordValido = await bcrypt.compare(password, usuario.password);
+    
+    if (esPasswordValido) {
       return usuario;
     }
+    
     return null;
   }
-  //valida el token, si experio o no
+
+  // Los métodos de token y demás siguen igual...
   validarToken(token: string): TokenPayload | null {
     const payload = this.tokens.get(token);
     
@@ -175,21 +213,21 @@ export class UsuariosService {
 
     return payload;
   }
-  //nos da al usuario en base su token
-  obtenerUsuarioDesdeToken(token: string) {
+
+  async obtenerUsuarioDesdeToken(token: string) {
     const payload = this.validarToken(token);
     
     if (!payload) {
-      throw new UnauthorizedException('Token invalido o expirado');
+      throw new UnauthorizedException('Token inválido o expirado');
     }
     
     return this.obtenerInfoSegura(payload.sub);
   }
-  //ciera sesion del usuario y invalida su token
+
   logout(token: string): boolean {
     return this.tokens.delete(token);
   }
-  //verifica si un token tiene un rol en especifico
+
   verificarTokenYRol(token: string, rolEsperado: string): boolean {
     const payload = this.validarToken(token);
     
@@ -199,47 +237,48 @@ export class UsuariosService {
     
     return payload.rol === rolEsperado;
   }
-  //nos da el ID usando el TOKEN
+
   obtenerUserIdDesdeToken(token: string): string | null {
     const payload = this.validarToken(token);
     return payload ? payload.sub : null;
   }
 
-  // funciones extras
-
-  //verificamos si un usuario tiene un rol en concreto
-  verificarUsuarioYRol(usuarioId: string, rolEsperado: string): boolean {
+  async verificarUsuarioYRol(usuarioId: string, rolEsperado: string): Promise<boolean> {
     try {
-      const usuario = this.findOne(usuarioId);
+      const usuario = await this.findOne(usuarioId);
       return usuario.rol === rolEsperado && usuario.activo === true;
     } catch {
       return false;
     }
   }
-  //obtiene infromacion del usuario, incluido contrasena
-  obtenerInfoSegura(usuarioId: string) {
-    const usuario = this.findOne(usuarioId);
+
+  async obtenerInfoSegura(usuarioId: string) {
+    const usuario = await this.findOne(usuarioId);
     return usuario.getInfoSegura();
   }
-  //busca por rol
-  findByRol(rol: RolUsuario): Usuario[] {
-    return this.usuarios.filter(u => u.rol === rol && u.activo);
+
+  async findByRol(rol: RolUsuario): Promise<Usuario[]> {
+    return await this.usuarioRepository.find({ 
+      where: { rol, activo: true } 
+    });
   }
-  //contabiliza usuarios
-  contarUsuarios(): { total: number; porRol: Record<string, number> } {
+
+  async contarUsuarios(): Promise<{ total: number; porRol: Record<string, number> }> {
+    const usuarios = await this.usuarioRepository.find();
+    
     const porRol: Record<string, number> = {};
     
-    this.usuarios.forEach(usuario => {
+    usuarios.forEach(usuario => {
       const rol = usuario.rol;
       porRol[rol] = (porRol[rol] || 0) + 1;
     });
 
     return {
-      total: this.usuarios.length,
+      total: usuarios.length,
       porRol
     };
   }
-  //esto genera el token
+
   private generarToken(usuario: Usuario): string {
     const token = `token-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     
@@ -255,10 +294,9 @@ export class UsuariosService {
     
     return token;
   }
-  //Omite la contraseña de un usuario para respuestas públicas
+
   private omitirPassword(usuario: Usuario) {
     const { password, ...usuarioSinPassword } = usuario;
     return usuarioSinPassword;
   }
 }
-//contiene toda la logica se usuario, ya sea el CRUD, los registros y login, generacion y control de tokens, verficaciones y permisos

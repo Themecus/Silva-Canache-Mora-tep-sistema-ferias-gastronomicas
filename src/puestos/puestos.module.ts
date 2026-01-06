@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { PuestosService } from './puestos.service';
 import { PuestosController } from './puestos.controller';
-import { CustomHttpModule } from '../common/http/http.module'; // AÑADE ESTA LÍNEA
+import { Puesto } from './entities/puesto.entity';
+import { CustomHttpModule } from '../common/http/http.module';
 
 @Module({
-  imports: [CustomHttpModule], // Importa el HTTP modulo
-  controllers: [PuestosController],//controla las rutas
-  providers: [PuestosService],//logica de negocio
-  exports: [PuestosService],//exporta el servicio donde se requiera
+  imports: [
+    TypeOrmModule.forFeature([Puesto]), // Registrar entidad
+    CustomHttpModule,
+  ],
+  controllers: [PuestosController],
+  providers: [PuestosService],
+  exports: [PuestosService],
 })
 export class PuestosModule {}
-
-//organiza y exporta los componenetes relaciones a los puestos
