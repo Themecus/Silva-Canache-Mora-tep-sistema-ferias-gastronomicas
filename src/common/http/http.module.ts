@@ -5,8 +5,8 @@ import { CustomHttpService } from './http.service';
 @Module({
   imports: [
     HttpModule.register({
-      timeout: 10000,//tiempo de espera de 10s
-      maxRedirects: 5,//cuantas redirecciones son posibles
+      timeout: 10000, //tiempo de espera de 10s
+      maxRedirects: 5, //cuantas redirecciones son posibles
     }),
   ],
   providers: [CustomHttpService],//los servicios que estaran disponibles

@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreatePuestoDto } from './dto/create-puesto.dto';
 import { UpdatePuestoDto } from './dto/update-puesto.dto';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
@@ -7,14 +9,15 @@ import { CustomHttpService } from '../common/http/http.service';
 
 @Injectable()
 export class PuestosService {
-  private puestos: Puesto[] = [];
-
-  constructor(private readonly httpService: CustomHttpService) {
-    console.log('PuestosService inicializado con HTTP Service');
+  constructor(
+    @InjectRepository(Puesto)
+    private puestoRepository: Repository<Puesto>,
+    private readonly httpService: CustomHttpService,
+  ) {
+    console.log('PuestosService inicializado con TypeORM');
   }
 
-
-  //valida tokens y extrae infromacion de usuario
+  // Método para validar y extraer usuario (sin cambios)
   private async validarYExtraerUsuario(token: string): Promise<{ id: string; rol: string; email: string }> {
     console.log('Validando token para operación...');
     
@@ -38,7 +41,7 @@ export class PuestosService {
     };
   }
 
-  //crea puestos
+  // CREAR PUESTO (CORREGIDO)
   async create(createPuestoDto: CreatePuestoDto, token: string): Promise<Puesto> {
     console.log('Creando puesto con token real...');
     
@@ -48,57 +51,70 @@ export class PuestosService {
       throw new BadRequestException(`Solo emprendedores pueden crear puestos. Tu rol es: ${usuario.rol}`);
     }
 
-    const puestoExistente = this.puestos.find(
-      p => p.emprendedorId === usuario.id
-    );
+    const puestoExistente = await this.puestoRepository.findOne({
+      where: { emprendedorId: usuario.id }
+    });
 
     if (puestoExistente) {
       throw new BadRequestException('El emprendedor ya tiene un puesto registrado');
     }
 
-    const puesto = new Puesto(
-      createPuestoDto.nombre,
-      createPuestoDto.color,
-      usuario.id
-    );
+    // CORRECCIÓN: Usar create() de TypeORM
+    const puesto = this.puestoRepository.create({
+      nombre: createPuestoDto.nombre,
+      color: createPuestoDto.color,
+      emprendedorId: usuario.id,
+      estado: 'pendiente',
+      disponible: false,
+    });
     
-    this.puestos.push(puesto);
-    console.log('Puesto creado para usuario:', usuario.email);
-    return puesto;
+    return await this.puestoRepository.save(puesto);
   }
 
-  //busca todos los puestos
-  findAll(): Puesto[] {
-    return this.puestos;
+  // BUSCAR TODOS
+  async findAll(): Promise<Puesto[]> {
+    return await this.puestoRepository.find();
   }
-  //busca por ID
-  findOne(id: string): Puesto {
-    const puesto = this.puestos.find(puesto => puesto.id === id);
+
+  // BUSCAR POR ID
+  async findOne(id: string): Promise<Puesto> {
+    const puesto = await this.puestoRepository.findOne({ where: { id } });
     if (!puesto) {
       throw new NotFoundException(`Puesto con ID ${id} no encontrado`);
     }
     return puesto;
   }
-  //Busca por emprendedor
-  findByEmprendedor(emprendedorId: string): Puesto[] {
-    return this.puestos.filter(puesto => puesto.emprendedorId === emprendedorId);
-  }
-  //busca por estado
-  findByEstado(estado: string): Puesto[] {
-    return this.puestos.filter(puesto => puesto.estado === estado);
-  }
-  //Busca los activos
-  findActivos(): Puesto[] {
-    return this.puestos.filter(puesto => 
-      puesto.estado === 'activo' && puesto.disponible === true
-    );
+
+  // BUSCAR POR EMPRENDEDOR
+  async findByEmprendedor(emprendedorId: string): Promise<Puesto[]> {
+    return await this.puestoRepository.find({ 
+      where: { emprendedorId } 
+    });
   }
 
-  //actualiza puestos que existan
-  update(id: string, updatePuestoDto: UpdatePuestoDto, usuarioId: string): Puesto {
-    const puesto = this.findOne(id);
+  // BUSCAR POR ESTADO
+  async findByEstado(estado: string): Promise<Puesto[]> {
+    return await this.puestoRepository.find({ 
+      where: { estado } 
+    });
+  }
+
+  // BUSCAR ACTIVOS
+  async findActivos(): Promise<Puesto[]> {
+    return await this.puestoRepository.find({ 
+      where: { 
+        estado: 'activo',
+        disponible: true 
+      } 
+    });
+  }
+
+  // ACTUALIZAR PUESTO
+  async update(id: string, updatePuestoDto: UpdatePuestoDto, usuarioId: string): Promise<Puesto> {
+    const puesto = await this.findOne(id);
     
-    if (!puesto.puedeEditar(usuarioId)) {
+    // Verificar permisos usando el método de la entidad
+    if (puesto.emprendedorId !== usuarioId) {
       throw new BadRequestException('Solo el dueño puede editar este puesto');
     }
     
@@ -106,6 +122,7 @@ export class PuestosService {
       throw new BadRequestException('No se puede editar un puesto activo');
     }
     
+    // Actualizar campos
     if (updatePuestoDto.nombre) {
       puesto.nombre = updatePuestoDto.nombre;
     }
@@ -115,13 +132,14 @@ export class PuestosService {
     }
     
     puesto.actualizadoEn = new Date();
-    return puesto;
+    return await this.puestoRepository.save(puesto);
   }
-  //borra un puesto
-  remove(id: string, usuarioId: string): void {
-    const puesto = this.findOne(id);
+
+  // ELIMINAR PUESTO
+  async remove(id: string, usuarioId: string): Promise<void> {
+    const puesto = await this.findOne(id);
     
-    if (!puesto.puedeEditar(usuarioId)) {
+    if (puesto.emprendedorId !== usuarioId) {
       throw new BadRequestException('Solo el dueño puede eliminar este puesto');
     }
     
@@ -129,12 +147,12 @@ export class PuestosService {
       throw new BadRequestException('Solo se pueden eliminar puestos en estado pendiente');
     }
     
-    const index = this.puestos.findIndex(puesto => puesto.id === id);
-    this.puestos.splice(index, 1);
+    await this.puestoRepository.remove(puesto);
   }
-  //cambia el estado del puesto
-  cambiarEstado(id: string, cambiarEstadoDto: CambiarEstadoDto, usuarioId: string, usuarioRol: string): Puesto {
-    const puesto = this.findOne(id);
+
+  // CAMBIAR ESTADO (CORREGIDO)
+  async cambiarEstado(id: string, cambiarEstadoDto: CambiarEstadoDto, usuarioId: string, usuarioRol: string): Promise<Puesto> {
+    const puesto = await this.findOne(id);
     
     switch (cambiarEstadoDto.estado) {
       case 'aprobado':
@@ -158,7 +176,7 @@ export class PuestosService {
         break;
         
       case 'inactivo':
-        if (usuarioRol === 'emprendedor' && !puesto.puedeEditar(usuarioId)) {
+        if (usuarioRol === 'emprendedor' && puesto.emprendedorId !== usuarioId) {
           throw new BadRequestException('No puedes inactivar un puesto que no es tuyo');
         }
         puesto.inactivar();
@@ -168,13 +186,13 @@ export class PuestosService {
         throw new BadRequestException('Estado no válido');
     }
     
-    return puesto;
+    return await this.puestoRepository.save(puesto);
   }
 
-  //verifica si el estado de un puesto es activo  
-  verificarPuestoActivo(puestoId: string): { activo: boolean; puesto?: Puesto } {
+  // VERIFICAR SI ESTÁ ACTIVO
+  async verificarPuestoActivo(puestoId: string): Promise<{ activo: boolean; puesto?: Puesto }> {
     try {
-      const puesto = this.findOne(puestoId);
+      const puesto = await this.findOne(puestoId);
       return {
         activo: puesto.estado === 'activo' && puesto.disponible === true,
         puesto
@@ -183,19 +201,21 @@ export class PuestosService {
       return { activo: false };
     }
   }
-  //verifica si un emprendedor es dueno de un puesto
-  verificarPropiedad(puestoId: string, emprendedorId: string): boolean {
+
+  // VERIFICAR PROPIEDAD
+  async verificarPropiedad(puestoId: string, emprendedorId: string): Promise<boolean> {
     try {
-      const puesto = this.findOne(puestoId);
+      const puesto = await this.findOne(puestoId);
       return puesto.emprendedorId === emprendedorId;
     } catch {
       return false;
     }
   }
-  //verifica si un puesto puede recibir pedidos
-  validarPuestoParaPedido(puestoId: string): { valido: boolean; motivo?: string } {
+
+  // VALIDAR PARA PEDIDO
+  async validarPuestoParaPedido(puestoId: string): Promise<{ valido: boolean; motivo?: string }> {
     try {
-      const puesto = this.findOne(puestoId);
+      const puesto = await this.findOne(puestoId);
       
       if (puesto.estado !== 'activo') {
         return { valido: false, motivo: 'Puesto no está activo' };
@@ -211,5 +231,3 @@ export class PuestosService {
     }
   }
 }
-
-//aqui en este .ts se gestiona todo lo que seria: CRUD, validacion de permisos, cambios de estado, comunicacion
