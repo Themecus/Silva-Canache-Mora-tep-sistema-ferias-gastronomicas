@@ -5,7 +5,7 @@ export class AppController {
   @Get()
   getInfo(): any {
     return {
-      servicio: 'Sistema de Ferias Gastronómicas - API Gateway',
+      servicio: 'Sistema de Ferias Gastronómicas',
       version: '1.0.0',
       estado: 'activo',
       descripcion: 'Sistema distribuido para gestión de ferias gastronómicas',

@@ -169,8 +169,8 @@ export class PuestosService {
         if (usuarioRol !== 'organizador') {
           throw new BadRequestException('Solo organizadores pueden activar puestos');
         }
-        if (puesto.estado !== 'aprobado') {
-          throw new BadRequestException('Solo se pueden activar puestos aprobados');
+        if (puesto.estado !== 'aprobado' && puesto.estado !== 'inactivo') {
+          throw new BadRequestException('Solo se pueden activar puestos aprobados o inactivos');
         }
         puesto.activar();
         break;
