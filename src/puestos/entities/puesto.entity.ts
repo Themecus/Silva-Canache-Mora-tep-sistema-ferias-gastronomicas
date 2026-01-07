@@ -43,7 +43,8 @@ export class Puesto {
   }
 
   activar(): void {
-    if (this.estado === 'aprobado') {
+  
+    if (this.estado === 'aprobado' || this.estado === 'inactivo') {
       this.estado = 'activo';
       this.disponible = true;
       this.actualizadoEn = new Date();
