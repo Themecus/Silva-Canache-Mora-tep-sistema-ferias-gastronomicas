@@ -14,7 +14,7 @@ import { UpdatePedidoDto } from './dto/update-pedido.dto';
 
 @Controller('pedidos')
 export class PedidosController {
-  constructor(private readonly pedidosService: PedidosService) { }
+  constructor(private readonly pedidosService: PedidosService) {}
 
   @Post()
   create(@Body() createPedidoDto: CreatePedidoDto) {
