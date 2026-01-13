@@ -52,8 +52,8 @@ export class AppController {
           crear_puesto: 'POST /api/puestos (requiere token de emprendedor)',
           listar_puestos: 'GET /api/puestos',
           obtener_puesto: 'GET /api/puestos/:id',
-          actualizar_puesto: 'PATCH /api/puestos/:id (requiere ser dueño)',
-          eliminar_puesto: 'DELETE /api/puestos/:id (requiere ser dueño, solo pendientes)',
+          actualizar_puesto: 'PATCH /api/puestos/:id (requiere ser emprendedor)',
+          eliminar_puesto: 'DELETE /api/puestos/:id (requiere ser emprendedor, solo pendientes)',
           
           // Filtros de busqueda
           puestos_activos: 'GET /api/puestos/activos',
@@ -63,7 +63,7 @@ export class AppController {
           // Control de estado
           aprobar_puesto: 'PATCH /api/puestos/:id/estado (solo organizadores, estado: "aprobado")',
           activar_puesto: 'PATCH /api/puestos/:id/estado (solo organizadores, estado: "activo")',
-          inactivar_puesto: 'PATCH /api/puestos/:id/estado (dueño u organizador, estado: "inactivo")',
+          inactivar_puesto: 'PATCH /api/puestos/:id/estado (emprendedor u organizador, estado: "inactivo")',
           
           // Verificaciones para otros microservicios
           verificar_puesto_activo: 'GET /api/puestos/:id/verificar-activo',

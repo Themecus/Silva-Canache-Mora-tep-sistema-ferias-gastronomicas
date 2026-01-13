@@ -42,7 +42,7 @@ export class Usuario {
   @UpdateDateColumn({ name: 'actualizado_en' })
   actualizadoEn: Date;
 
-  // Métodos de instancia (sin cambios)
+  // Métodos de instancia 
   puedeCrearPuesto(): boolean {
     return this.rol === RolUsuario.EMPRENDEDOR;
   }
@@ -74,3 +74,6 @@ export class Usuario {
     };
   }
 }
+
+//este archivo define a la entidad 'Usuario'  para su uso en typeORM
+//sumado a claro ser la representacion en la tabla que tenemos en postgre

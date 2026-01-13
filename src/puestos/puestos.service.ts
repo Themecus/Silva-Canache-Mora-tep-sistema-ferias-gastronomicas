@@ -17,7 +17,7 @@ export class PuestosService {
     console.log('PuestosService inicializado con TypeORM');
   }
 
-  // Método para validar y extraer usuario (sin cambios)
+  // Método para validar y extraer usuario 
   private async validarYExtraerUsuario(token: string): Promise<{ id: string; rol: string; email: string }> {
     console.log('Validando token para operación...');
     
@@ -41,7 +41,7 @@ export class PuestosService {
     };
   }
 
-  // CREAR PUESTO (CORREGIDO)
+  // creamos los puestos
   async create(createPuestoDto: CreatePuestoDto, token: string): Promise<Puesto> {
     console.log('Creando puesto con token real...');
     
@@ -59,7 +59,6 @@ export class PuestosService {
       throw new BadRequestException('El emprendedor ya tiene un puesto registrado');
     }
 
-    // CORRECCIÓN: Usar create() de TypeORM
     const puesto = this.puestoRepository.create({
       nombre: createPuestoDto.nombre,
       color: createPuestoDto.color,
@@ -71,12 +70,12 @@ export class PuestosService {
     return await this.puestoRepository.save(puesto);
   }
 
-  // BUSCAR TODOS
+  // buscar a todos los puestos
   async findAll(): Promise<Puesto[]> {
     return await this.puestoRepository.find();
   }
 
-  // BUSCAR POR ID
+  // buscar puestos por ID
   async findOne(id: string): Promise<Puesto> {
     const puesto = await this.puestoRepository.findOne({ where: { id } });
     if (!puesto) {
@@ -85,21 +84,21 @@ export class PuestosService {
     return puesto;
   }
 
-  // BUSCAR POR EMPRENDEDOR
+  // buscar puestos por emprendedor
   async findByEmprendedor(emprendedorId: string): Promise<Puesto[]> {
     return await this.puestoRepository.find({ 
       where: { emprendedorId } 
     });
   }
 
-  // BUSCAR POR ESTADO
+  // buscar puestos por estado
   async findByEstado(estado: string): Promise<Puesto[]> {
     return await this.puestoRepository.find({ 
       where: { estado } 
     });
   }
 
-  // BUSCAR ACTIVOS
+  // buscar puestos por activos
   async findActivos(): Promise<Puesto[]> {
     return await this.puestoRepository.find({ 
       where: { 
@@ -109,7 +108,7 @@ export class PuestosService {
     });
   }
 
-  // ACTUALIZAR PUESTO
+  // modifica o actualiza el puesto
   async update(id: string, updatePuestoDto: UpdatePuestoDto, usuarioId: string): Promise<Puesto> {
     const puesto = await this.findOne(id);
     
@@ -135,7 +134,7 @@ export class PuestosService {
     return await this.puestoRepository.save(puesto);
   }
 
-  // ELIMINAR PUESTO
+  // borra el puesto
   async remove(id: string, usuarioId: string): Promise<void> {
     const puesto = await this.findOne(id);
     
@@ -150,7 +149,7 @@ export class PuestosService {
     await this.puestoRepository.remove(puesto);
   }
 
-  // CAMBIAR ESTADO (CORREGIDO)
+  // modifica el estado del puesto
   async cambiarEstado(id: string, cambiarEstadoDto: CambiarEstadoDto, usuarioId: string, usuarioRol: string): Promise<Puesto> {
     const puesto = await this.findOne(id);
     
@@ -189,7 +188,7 @@ export class PuestosService {
     return await this.puestoRepository.save(puesto);
   }
 
-  // VERIFICAR SI ESTÁ ACTIVO
+  // revisa si esta activo
   async verificarPuestoActivo(puestoId: string): Promise<{ activo: boolean; puesto?: Puesto }> {
     try {
       const puesto = await this.findOne(puestoId);
@@ -202,7 +201,7 @@ export class PuestosService {
     }
   }
 
-  // VERIFICAR PROPIEDAD
+  // revisa propiedad del puesto
   async verificarPropiedad(puestoId: string, emprendedorId: string): Promise<boolean> {
     try {
       const puesto = await this.findOne(puestoId);
@@ -212,7 +211,7 @@ export class PuestosService {
     }
   }
 
-  // VALIDAR PARA PEDIDO
+  // valida pedido
   async validarPuestoParaPedido(puestoId: string): Promise<{ valido: boolean; motivo?: string }> {
     try {
       const puesto = await this.findOne(puestoId);
@@ -231,3 +230,5 @@ export class PuestosService {
     }
   }
 }
+
+//Aqui usaremos los endpoints que preparamos en controller

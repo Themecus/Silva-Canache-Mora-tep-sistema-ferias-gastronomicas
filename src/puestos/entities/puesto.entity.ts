@@ -65,3 +65,6 @@ export class Puesto {
     return rol === 'organizador';
   }
 }
+
+//este archivo define a la entidad 'puesto'  para su uso en typeORM
+//sumado a claro ser la representacion en la tabla que tenemos en postgre

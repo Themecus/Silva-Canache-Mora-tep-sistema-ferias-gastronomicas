@@ -43,3 +43,4 @@ import { CustomHttpModule } from './common/http/http.module';
   providers: [AppService],
 })
 export class AppModule {}
+// configura variables del archivo .env, las conexiones postgre, importa los microservicios funcionales, define la entrada de la aplicacion

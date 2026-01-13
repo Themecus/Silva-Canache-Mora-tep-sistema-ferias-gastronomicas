@@ -38,7 +38,7 @@ async function bootstrap() {
   console.log('GET    /api/pedidos?clienteId=...');
   console.log('GET    /api/pedidos?puestoId=...');
   console.log('GET    /api/pedidos/:id');
-  console.log('PATCH  /api/pedidos/:id        ');
+  console.log('PATCH  /api/pedidos/:id');
   console.log('');
   console.log('USUARIOS POR DEFECTO:');
   console.log('Organizador:  admin@feria.com / admin123');

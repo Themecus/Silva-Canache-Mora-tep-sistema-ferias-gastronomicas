@@ -15,3 +15,4 @@ import { CustomHttpModule } from '../common/http/http.module';
   exports: [UsuariosService],
 })
 export class UsuariosModule {}
+// este .ts configura las dependencias necesarias para el funcionamiento del módulo

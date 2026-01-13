@@ -19,18 +19,17 @@ import { LoginDto } from './dto/login.dto';
 import { RegistroDto } from './dto/registro.dto';
 import { RolUsuario } from './entities/usuario.entity';
 
-@Controller('usuarios')
+@Controller('usuarios')// para usar estos endpoinst utiliza la terminacion '/usuarios'
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  // Añade async y await a los métodos que llaman servicios asíncronos
-
+  // nos da el usuario autenticado
   @Get('perfil')
   async obtenerPerfil(@Headers('authorization') authHeader: string) {
     const token = this.extraerToken(authHeader);
     return await this.usuariosService.obtenerUsuarioDesdeToken(token);
   }
-
+  //validamos token
   @Get('validar-token')
   validarToken(@Headers('authorization') authHeader: string) {
     const token = this.extraerToken(authHeader);
@@ -50,7 +49,7 @@ export class UsuariosController {
       }
     };
   }
-
+  //valida el token y el rol si tiene
   @Get('validar/:rol')
   validarTokenYRol(
     @Headers('authorization') authHeader: string,
@@ -60,13 +59,12 @@ export class UsuariosController {
     const esValido = this.usuariosService.verificarTokenYRol(token, rol);
     return { valido: esValido };
   }
-
+  //conteo de todos los usuarios por roles
   @Get('estadisticas')
   async getEstadisticas() {
     return await this.usuariosService.contarUsuarios();
   }
-
-  // CORREGIDO: Añadido async/await
+  // nos da usuarios por email
   @Get('email/:email')
   async findByEmail(@Param('email') email: string) {
     const usuario = await this.usuariosService.findByEmail(email);
@@ -75,7 +73,7 @@ export class UsuariosController {
     }
     return { encontrado: true, usuario: usuario.getInfoSegura() };
   }
-
+  // nos da todos los usuarios
   @Get()
   async findAll(@Query('rol') rol?: string) {
     if (rol) {
@@ -85,12 +83,13 @@ export class UsuariosController {
     
     return await this.usuariosService.findAll();
   }
-
+  // obtienes usuarios id
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.usuariosService.obtenerInfoSegura(id);
   }
 
+  //verifica el rol del usuario
   @Get('verificar/:usuarioId/:rol')
   async verificarUsuarioYRol(
     @Param('usuarioId') usuarioId: string,
@@ -100,23 +99,26 @@ export class UsuariosController {
     return { valido };
   }
 
+  //registramos el usuario
   @Post('registro')
   @HttpCode(HttpStatus.CREATED)
   async registrar(@Body() registroDto: RegistroDto) {
     return await this.usuariosService.registrar(registroDto);
   }
 
+  //logeamos al usuario
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return await this.usuariosService.login(loginDto);
   }
 
+  //crear nuevo usuario de diferentes roles
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createUsuarioDto: CreateUsuarioDto) {
     return await this.usuariosService.create(createUsuarioDto);
   }
-
+  //deslogeamos al usuario
   @Post('logout')
   logout(@Headers('authorization') authHeader: string) {
     console.log('Petición de logout recibida');
@@ -124,7 +126,7 @@ export class UsuariosController {
     const exitoso = this.usuariosService.logout(token);
     return { logout: exitoso };
   }
-
+  //modificamos al usuario
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -133,13 +135,13 @@ export class UsuariosController {
     return await this.usuariosService.update(id, updateUsuarioDto);
   }
 
+  //borramos el usuario
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.usuariosService.remove(id);
   }
 
-  // Métodos auxiliares (sin cambios)
   private convertirStringARol(rolString: string): RolUsuario {
     switch (rolString.toLowerCase()) {
       case 'cliente': return RolUsuario.CLIENTE;
@@ -163,3 +165,4 @@ export class UsuariosController {
     return parts[0];
   }
 }
+//este .ts se encarga del CRUD de usuarios, login y registro, validaciones basicas
