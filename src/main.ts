@@ -23,7 +23,7 @@ async function bootstrap() {
   console.log('USUARIOS Y AUTENTICACIÓN:');
   console.log('POST   /api/usuarios/registro');
   console.log('POST   /api/usuarios/login');
-  console.log('GET    /api/usuarios/perfil     (con Authorization header)');
+  console.log('GET    /api/usuarios/perfil');
   console.log('GET    /api/usuarios/validar-token');
   console.log('');
   console.log('PUESTOS GASTRONÓMICOS:');
@@ -32,13 +32,19 @@ async function bootstrap() {
   console.log('GET    /api/puestos/activos');
   console.log('PATCH  /api/puestos/:id/estado  (cambiar estado)');
   console.log('');
+  console.log('PEDIDOS GASTRONÓMICOS:');  
+  console.log('POST   /api/pedidos             (usar token cliente)');
+  console.log('GET    /api/pedidos');
+  console.log('GET    /api/pedidos?clienteId=...');
+  console.log('GET    /api/pedidos?puestoId=...');
+  console.log('GET    /api/pedidos/:id');
+  console.log('PATCH  /api/pedidos/:id        ');
+  console.log('');
   console.log('USUARIOS POR DEFECTO:');
   console.log('Organizador:  admin@feria.com / admin123');
   console.log('Cliente:      cliente@ejemplo.com / cliente123');
   console.log('Emprendedor:  emprendedor@ejemplo.com / emprendedor123');
   console.log('');
-  console.log('PARA MÁS INFORMACIÓN:');
-  console.log('GET /api/ - Documentación completa de endpoints');
   console.log('========================================');
 }
 bootstrap();

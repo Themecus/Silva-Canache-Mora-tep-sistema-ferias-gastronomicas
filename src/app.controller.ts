@@ -71,6 +71,18 @@ export class AppController {
           validar_para_pedido: 'GET /api/puestos/:id/validar-para-pedido'
         },
         
+        // ==================== GESTIÓN DE PEDIDOS ====================
+        pedidos: {
+          crear_pedido: 'POST /api/pedidos (requiere token de cliente)',
+          listar_pedidos: 'GET /api/pedidos',
+          listar_por_cliente: 'GET /api/pedidos?clienteId={id}',
+          listar_por_puesto: 'GET /api/pedidos?puestoId={id}',
+          obtener_pedido: 'GET /api/pedidos/:id',
+          actualizar_estado: 'PATCH /api/pedidos/:id (requiere ser dueño del puesto u organizador)',
+          eliminar_pedido: 'DELETE /api/pedidos/:id (solo cliente, solo pendientes)',
+        },
+
+
         // ==================== PARA OTROS MICROSERVICIOS ====================
         servicios_internos: {
           verificar_usuario_rol: 'GET /api/usuarios/verificar/{usuarioId}/{rol}',
